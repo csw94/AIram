@@ -11,6 +11,11 @@
 |---|---|
 | `af5f758` | IntelliJ 기본 프로젝트 → **Gradle(Kotlin DSL)** 전환, kotlin.test 환경, 기획서 v0.3, 데이터 모델, 알람 계산 테스트 작성 (TDD) |
 | `e6efc61` | 알람 계산 기능 구현 — **테스트 19개 전부 통과** |
+| `a05a872` | HANDOVER.md 추가 |
+| (다음 커밋) | **콘솔 근무표 입력·출력**: `schedule.txt` 읽기 → 달력 출력 → 다음 알람 — **테스트 30개 전부 통과** |
+
+- 콘솔 입출력 설계: 설계안 3개(한 줄 입력 / 메뉴형 / 파일) 중 **파일 입력 + 달력형 출력** 선택
+- 기획서에 **S8 근무표 사진으로 입력** 추가 (Android 단계에서 설계안 비교 후 진행)
 
 - 기획서 v0.3 반영 내용: 알람 규칙 검증, "다음 알람 하나만 예약"(도미노 방식), 한 달 기준 탐색, `isOff` 계산 속성화, 사용 중 근무 유형 삭제 불가
 - 앱 가제: **일어나세요용사여** (구 "깨워줘")
@@ -50,10 +55,10 @@
 
 ## 3. 현재 진행 상태 및 남은 작업
 
-**현재 위치: 개발 일정 1단계(콘솔) — 3~4주차 핵심 계산 로직 완료**
+**현재 위치: 개발 일정 1단계(콘솔) — 3~4주차 완료 (입력 → 계산 → 출력 한 바퀴 동작). 다음은 5주차 패턴 자동 채우기**
 
 ### 남은 작업 (1단계: 콘솔)
-- [ ] **3주차 남은 것**: 콘솔에서 근무표 입력·출력 (`Main.kt` — 지금은 IntelliJ 기본 Hello 예제 그대로)
+- [x] **3주차**: 콘솔 근무표 입력(`schedule.txt`)·달력 출력·다음 알람 표시 완료
 - [ ] **5주차**: 패턴 자동 채우기 (`D D E E N N OFF OFF` 반복 + 시작 날짜) — 테스트 먼저
 - [ ] (선택) "이번만 끄기"(S7) 토글 함수
 - [ ] (선택) 사용 중인 근무 유형 삭제 불가 검사 함수
@@ -74,13 +79,18 @@
 | `alarm_app_plan.md` | 기획서 v0.3 (요구사항의 기준) |
 | `src/main/kotlin/Models.kt` | `ShiftType`, `AlarmRule`, `WorkDay` |
 | `src/main/kotlin/AlarmCalculator.kt` | `isValid()`, `alarmTimesFor()`, `nextAlarm()` |
-| `src/main/kotlin/Main.kt` | 콘솔 진입점 (아직 예제 코드) |
-| `src/test/kotlin/AlarmCalculatorTest.kt` | 알람 계산 테스트 18개 |
+| `src/main/kotlin/Main.kt` | 콘솔 진입점: 파일 읽기 → 달력 출력 → 다음 알람 |
+| `src/main/kotlin/DefaultShifts.kt` | 기본 근무 유형(D 07:00, E 15:00, N 23:00, OFF) + 기본 알람 규칙(90분 전·10분 간격·3번) |
+| `src/main/kotlin/ScheduleParser.kt` | `parseSchedule()`: 파일 줄 → WorkDay, 잘못된 줄은 "n번째 줄: 이유" |
+| `src/main/kotlin/ConsoleFormat.kt` | `formatCalendar()`(일요일 시작, 한 칸 4글자, 근무 없는 날 "-"), `nextAlarmMessage()` |
+| `schedule.txt` | 예시 근무표 (2026년 12월 1~16일) |
+| `src/test/kotlin/*Test.kt` | 테스트: 알람 계산 18 + 파일 읽기 7 + 출력 4 + 환경 1 = 30개 |
 | `src/test/kotlin/SetupTest.kt` | 환경 확인용 테스트 (지워도 됨) |
 | `build.gradle.kts` | 빌드 설정 |
 
 ### 주의사항
-- **실행 명령**: 테스트 `./gradlew test`, 실행 `./gradlew run`
+- **실행 명령**: 테스트 `./gradlew test`, 실행 `./gradlew run` (다른 파일: `./gradlew run --args="파일.txt"`)
+- 윈도우 콘솔 한글 깨짐 방지로 `Main.kt`에서 출력을 UTF-8로 설정함
 - 테스트 이름은 한글 백틱 함수명 사용 — JVM 제약상 `. ; [ ] / < > :` 문자는 쓰면 안 됨
 - IntelliJ에서 Gradle 프로젝트로 다시 불러와야 함 ("Load Gradle Project" / `build.gradle.kts` 우클릭 → Link Gradle Project)
 - 예전 IntelliJ 설정 파일(`AIram.iml` 등)은 프로젝트에서 제거됨 (임시 폴더로 옮겨 둠, 재부팅 시 사라질 수 있음 — 필요 없음)
