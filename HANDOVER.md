@@ -16,7 +16,8 @@
 | `5ec51c8` | **패턴 자동 채우기** (`PATTERN` 줄) + 프로젝트 `CLAUDE.md` — 테스트 39개 통과 |
 | `afa87a8` | **이번만 끄기(S7)** — `SKIP 날짜` 줄, 달력에 `*` 표시 — 테스트 48개 통과 |
 | `283edff` | **사용 중 근무 유형 삭제 막기** — `deleteShiftType()` + sealed class 결과, 진행 방식 규칙 — 테스트 54개 통과 |
-| (이 커밋) | **2단계 시작: `core` + `app` 멀티 모듈 전환**, Android 앱 홈 화면(오늘 근무 + 다음 알람) — core 테스트 54개 통과, 디버그 APK 빌드 성공 |
+| `57eb4ba` | **2단계 시작: `core` + `app` 멀티 모듈 전환**, Android 앱 홈 화면(오늘 근무 + 다음 알람) — core 테스트 54개 통과, 디버그 APK 빌드 성공 |
+| (이 커밋) | **M2 근무표 달력 화면** — core에 편집 함수(`ScheduleEdit.kt`, 테스트 10개), app에 ViewModel·홈·달력 화면 — core 테스트 64개 통과, APK 빌드 성공 |
 
 - 콘솔 입출력 설계: 파일 입력 + 달력형 출력
 - 기획서에 **S8 근무표 사진으로 입력** 추가 (Android 단계에서 설계안 비교 후 진행)
@@ -75,14 +76,14 @@ AIram/
 
 ## 3. 현재 진행 상태 및 남은 작업
 
-**현재 위치: 2단계(Android) 1번째 마일스톤 완료 — 앱이 빌드되고 홈 화면에 core 계산 결과가 나옴 (아직 예시 패턴, 저장·알람 없음)**
+**현재 위치: 2단계(Android) M2 완료 — 달력에서 근무 입력·패턴 채우기·이번만 끄기 가능 (아직 저장 안 됨 → 다음 M3 Room)**
 
 ### 1단계: 콘솔 ✅ 전부 완료
 - 콘솔 입출력, 패턴 자동 채우기, 이번만 끄기, 근무 유형 삭제 막기
 
 ### 2단계: Android (마일스톤 순서)
 - [x] **M1** 멀티 모듈 전환 + 홈 화면 (오늘 근무, 다음 알람) — 예시 패턴 하드코딩
-- [ ] **M2** 근무표 달력 화면 (월 이동, 날짜 눌러 근무 바꾸기, 패턴 채우기, 이번만 끄기)
+- [x] **M2** 근무표 달력 화면 (월 이동, 날짜 눌러 근무 바꾸기·지우기, 패턴으로 그 달 채우기, 이번만 끄기)
 - [ ] **M3** Room으로 근무표·근무 유형·알람 규칙 저장
 - [ ] **M4** 근무 유형 설정 화면 (+ 알람 규칙, 미리보기, 검증, 삭제 막기)
 - [ ] **M5** AlarmManager로 다음 알람 예약 + 알람 울림 화면(소리·진동) + 정확한 알람 권한 + 재부팅 재예약
@@ -105,9 +106,12 @@ AIram/
 | `build.gradle.kts` | 루트: 플러그인 버전만 (`apply false`) |
 | `core/build.gradle.kts` | core 빌드 (kotlin jvm + application, 실행 폴더 = 루트) |
 | `app/build.gradle.kts` | app 빌드 (AGP, Compose, `implementation(project(":core"))`) |
-| `core/src/main/kotlin/com/wakeuphero/core/` | `Models` `AlarmCalculator` `DefaultShifts` `ScheduleParser` `PatternFill` `SkipAlarm` `DeleteShiftType` `ConsoleFormat` `Main`(콘솔) |
-| `core/src/test/kotlin/com/wakeuphero/core/` | 테스트 54개 (알람 계산 18, 파일 읽기 7, 출력 4, 환경 1, 패턴 9, 이번만 끄기 9, 유형 삭제 6) |
-| `app/src/main/kotlin/com/wakeuphero/app/MainActivity.kt` | 홈 화면 `HomeScreen` (+ Preview) |
+| `core/src/main/kotlin/com/wakeuphero/core/` | `ScheduleEdit`(setShift·removeShift·toggleSkip·applyPattern·parsePatternCodes·monthGrid) `Models` `AlarmCalculator` `DefaultShifts` `ScheduleParser` `PatternFill` `SkipAlarm` `DeleteShiftType` `ConsoleFormat` `Main`(콘솔) |
+| `core/src/test/kotlin/com/wakeuphero/core/` | 테스트 64개 (알람 계산 18, 파일 읽기 7, 출력 4, 환경 1, 패턴 9, 이번만 끄기 9, 유형 삭제 6, 근무표 편집 10) |
+| `app/src/main/kotlin/com/wakeuphero/app/MainActivity.kt` | `App()`: 화면 전환(enum Screen: HOME, CALENDAR), 뒤로가기 |
+| `app/.../ScheduleViewModel.kt` | 근무표 상태(StateFlow) + core 편집 함수 호출 (아직 메모리에만, 시작 시 이번 달 예시 패턴) |
+| `app/.../HomeScreen.kt` | 오늘·내일 근무, 다음 알람, [근무표 달력] 버튼 |
+| `app/.../CalendarScreen.kt` | 달력(monthGrid), 날짜 창(DayDialog), 패턴 창(PatternDialog), 근무 색 배경 |
 | `app/src/main/AndroidManifest.xml`, `res/values/strings.xml` | 앱 이름 "일어나세요용사여" |
 | `schedule.txt` | 콘솔용 예시 근무표 |
 
@@ -124,3 +128,5 @@ AIram/
 - PC에 JDK 17은 없음 (JDK 25, 26 + Android Studio 내장 JBR) → `jvmToolchain(17)` 쓰면 빌드 실패하니 현재 방식 유지
 - PowerShell/Bash에서 `python` 명령은 Windows 스토어 스텁이라 멈출 수 있음 — 쓰지 말 것
 - Android Studio에서 열 때는 **AIram 폴더 전체**를 열 것 (Gradle 멀티 모듈로 인식)
+- 분기점 기록(M2): 상태 관리 **ViewModel**(vs remember / 전역 객체), 화면 전환 **enum 상태**(vs Navigation 라이브러리 / Activity 여러 개)
+- 에뮬레이터: `Medium_Phone_API_37.0` (창 없이 켜기: `emulator -avd Medium_Phone_API_37.0 -no-window`, 설치 `adb install -r app/build/outputs/apk/debug/app-debug.apk`)
