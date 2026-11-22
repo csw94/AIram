@@ -12,7 +12,8 @@
 | `af5f758` | IntelliJ 기본 프로젝트 → **Gradle(Kotlin DSL)** 전환, kotlin.test 환경, 기획서 v0.3, 데이터 모델, 알람 계산 테스트 작성 (TDD) |
 | `e6efc61` | 알람 계산 기능 구현 — **테스트 19개 전부 통과** |
 | `a05a872` | HANDOVER.md 추가 |
-| (다음 커밋) | **콘솔 근무표 입력·출력**: `schedule.txt` 읽기 → 달력 출력 → 다음 알람 — **테스트 30개 전부 통과** |
+| `cc175ce` | **콘솔 근무표 입력·출력**: `schedule.txt` 읽기 → 달력 출력 → 다음 알람 — **테스트 30개 전부 통과** |
+| (다음 커밋) | **패턴 자동 채우기** (`PATTERN` 줄) + 프로젝트 `CLAUDE.md`(커밋 후 바로 push 규칙) — **테스트 39개 전부 통과** |
 
 - 콘솔 입출력 설계: 설계안 3개(한 줄 입력 / 메뉴형 / 파일) 중 **파일 입력 + 달력형 출력** 선택
 - 기획서에 **S8 근무표 사진으로 입력** 추가 (Android 단계에서 설계안 비교 후 진행)
@@ -48,18 +49,18 @@
 ### 작업 규칙 (CLAUDE.md 요약)
 - 모호하면 먼저 질문, 새 기능은 설계안 3개 비교 후 사람이 선택
 - **TDD**: 테스트 먼저 → 실패 확인 → 구현 → 통과까지 반복
-- 기능 하나 완성마다 사용자 확인 후 커밋 (git 작성자: 일어나세요용사여, 저장소 로컬 설정)
+- 기능 하나 완성마다 사용자 확인 후 커밋 → **커밋하면 바로 `git push`** (git 작성자: 일어나세요용사여, 저장소 로컬 설정, 원격 origin/main = github.com/csw94/AIram)
 - 답변은 한국어로, 어려운 개념은 쉽게
 
 ---
 
 ## 3. 현재 진행 상태 및 남은 작업
 
-**현재 위치: 개발 일정 1단계(콘솔) — 3~4주차 완료 (입력 → 계산 → 출력 한 바퀴 동작). 다음은 5주차 패턴 자동 채우기**
+**현재 위치: 개발 일정 1단계(콘솔) — 3~4주차 완료 (입력 → 계산 → 출력 한 바퀴 동작). 5주차 패턴 자동 채우기까지 완료. 1단계(콘솔) 필수 작업 끝 → 선택 작업 또는 2단계(Android) 준비**
 
 ### 남은 작업 (1단계: 콘솔)
 - [x] **3주차**: 콘솔 근무표 입력(`schedule.txt`)·달력 출력·다음 알람 표시 완료
-- [ ] **5주차**: 패턴 자동 채우기 (`D D E E N N OFF OFF` 반복 + 시작 날짜) — 테스트 먼저
+- [x] **5주차**: 패턴 자동 채우기 — `PATTERN 시작일 끝날 근무...` 줄, 날짜 줄이 패턴보다 우선, 패턴끼리 겹치면 아래 줄 우선
 - [ ] (선택) "이번만 끄기"(S7) 토글 함수
 - [ ] (선택) 사용 중인 근무 유형 삭제 불가 검사 함수
 
@@ -77,14 +78,16 @@
 | 파일 | 역할 |
 |---|---|
 | `alarm_app_plan.md` | 기획서 v0.3 (요구사항의 기준) |
+| `CLAUDE.md` | 프로젝트 규칙 (Claude가 자동으로 읽음): 시작 시 HANDOVER·기획서 읽기, 커밋 후 바로 push |
 | `src/main/kotlin/Models.kt` | `ShiftType`, `AlarmRule`, `WorkDay` |
 | `src/main/kotlin/AlarmCalculator.kt` | `isValid()`, `alarmTimesFor()`, `nextAlarm()` |
 | `src/main/kotlin/Main.kt` | 콘솔 진입점: 파일 읽기 → 달력 출력 → 다음 알람 |
 | `src/main/kotlin/DefaultShifts.kt` | 기본 근무 유형(D 07:00, E 15:00, N 23:00, OFF) + 기본 알람 규칙(90분 전·10분 간격·3번) |
-| `src/main/kotlin/ScheduleParser.kt` | `parseSchedule()`: 파일 줄 → WorkDay, 잘못된 줄은 "n번째 줄: 이유" |
+| `src/main/kotlin/ScheduleParser.kt` | `parseSchedule()`: 날짜 줄 + PATTERN 줄 → WorkDay(날짜순), 잘못된 줄은 "n번째 줄: 이유" |
+| `src/main/kotlin/PatternFill.kt` | `fillPattern()`: 패턴을 시작일~끝날까지 반복해서 펼치기 |
 | `src/main/kotlin/ConsoleFormat.kt` | `formatCalendar()`(일요일 시작, 한 칸 4글자, 근무 없는 날 "-"), `nextAlarmMessage()` |
-| `schedule.txt` | 예시 근무표 (2026년 12월 1~16일) |
-| `src/test/kotlin/*Test.kt` | 테스트: 알람 계산 18 + 파일 읽기 7 + 출력 4 + 환경 1 = 30개 |
+| `schedule.txt` | 예시 근무표 (12월 전체 PATTERN + 12/25 OFF) |
+| `src/test/kotlin/*Test.kt` | 테스트: 알람 계산 18 + 파일 읽기 7 + 출력 4 + 환경 1 + 패턴 9 = 39개 |
 | `src/test/kotlin/SetupTest.kt` | 환경 확인용 테스트 (지워도 됨) |
 | `build.gradle.kts` | 빌드 설정 |
 
