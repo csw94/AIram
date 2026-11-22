@@ -23,7 +23,8 @@ fun formatCalendar(month: YearMonth, schedule: List<WorkDay>, shiftTypes: List<S
         val date = month.atDay(day)
         val workDay = schedule.find { it.date == date }
         val code = workDay?.let { wd -> shiftTypes.find { it.id == wd.shiftTypeId }?.shortName } ?: "-"
-        row.append(code.padStart(CELL_WIDTH))
+        val mark = if (workDay?.alarmSkipped == true) "*" else "" // 이번만 끄기 표시
+        row.append((code + mark).padStart(CELL_WIDTH))
         cellsInRow++
 
         if (cellsInRow == 7) { // 토요일까지 채웠으면 다음 줄로
@@ -33,6 +34,11 @@ fun formatCalendar(month: YearMonth, schedule: List<WorkDay>, shiftTypes: List<S
         }
     }
     if (row.isNotEmpty()) lines += row.toString() // 마지막 주
+
+    // 이 달에 알람을 끈 날이 있으면 별표 설명 추가
+    if (schedule.any { YearMonth.from(it.date) == month && it.alarmSkipped }) {
+        lines += "* = 이번만 끄기 (알람 안 울림)"
+    }
 
     return lines.joinToString("\n")
 }

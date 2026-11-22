@@ -10,13 +10,16 @@ data class ParseResult(
 // 근무표 파일의 각 줄을 WorkDay 목록으로 바꾼다
 // - "2026-12-01 D"                              → 그 날짜 근무
 // - "PATTERN 2026-12-01 2026-12-31 D D E E ..." → 기간 동안 패턴 반복
+// - "SKIP 2026-12-03"                           → 그날 근무는 그대로, 알람만 끄기
 // - 빈 줄, "#"으로 시작하는 줄은 무시
 // - 우선순위: 날짜 줄 > 패턴 줄 (줄 순서와 상관없음), 패턴끼리 겹치면 아래 줄이 우선
-// - 잘못된 줄은 건너뛰고 errors에 "n번째 줄: 이유"를 남긴다
+// - SKIP은 근무표를 다 만든 뒤에 적용 (줄 순서와 상관없음)
+// - 잘못된 줄은 건너뛰고 errors에 "n번째 줄: 이유"를 줄 번호 순서대로 남긴다
 fun parseSchedule(lines: List<String>, shiftTypes: List<ShiftType>): ParseResult {
     val patternDays = mutableMapOf<LocalDate, WorkDay>() // 패턴으로 채운 근무
     val manualDays = mutableMapOf<LocalDate, WorkDay>()  // 날짜 줄로 직접 쓴 근무
-    val errors = mutableListOf<String>()
+    val skips = mutableListOf<Pair<Int, LocalDate>>()    // (줄 번호, 알람 끌 날짜)
+    val errors = mutableListOf<Pair<Int, String>>()      // (줄 번호, 오류 이유)
 
     lines.forEachIndexed { index, rawLine ->
         val lineNo = index + 1
@@ -26,17 +29,38 @@ fun parseSchedule(lines: List<String>, shiftTypes: List<ShiftType>): ParseResult
         // 공백 여러 칸도 하나로 보고 나눈다
         val parts = line.split(Regex("\\s+"))
 
-        val error = if (parts[0].uppercase() == "PATTERN") {
-            parsePatternLine(parts, shiftTypes, patternDays)
-        } else {
-            parseDateLine(parts, shiftTypes, manualDays)
+        val error = when (parts[0].uppercase()) {
+            "PATTERN" -> parsePatternLine(parts, shiftTypes, patternDays)
+            "SKIP" -> parseSkipLine(parts, lineNo, skips)
+            else -> parseDateLine(parts, shiftTypes, manualDays)
         }
-        if (error != null) errors += "${lineNo}번째 줄: $error"
+        if (error != null) errors += lineNo to error
     }
 
     // 패턴 위에 날짜 줄을 덮어쓴다 → 날짜 줄이 우선
-    val merged = patternDays + manualDays
-    return ParseResult(merged.values.sortedBy { it.date }, errors)
+    var schedule = (patternDays + manualDays).values.sortedBy { it.date }
+
+    // 근무표가 다 만들어진 뒤에 SKIP 적용 (그래야 줄 순서와 상관없이 동작)
+    for ((lineNo, date) in skips) {
+        val workDay = schedule.find { it.date == date }
+        val shiftType = workDay?.let { wd -> shiftTypes.find { it.id == wd.shiftTypeId } }
+        when {
+            workDay == null -> errors += lineNo to "${date}에는 근무가 없어서 끌 알람이 없어요"
+            shiftType?.isOff == true -> errors += lineNo to "${date}은 휴무라 원래 알람이 없어요"
+            else -> schedule = skipAlarm(schedule, date)
+        }
+    }
+
+    val messages = errors.sortedBy { it.first }.map { (lineNo, reason) -> "${lineNo}번째 줄: $reason" }
+    return ParseResult(schedule, messages)
+}
+
+// "SKIP 2026-12-03" 한 줄 읽기. 날짜만 모아 두고 실제 적용은 나중에. 실패하면 오류 이유
+private fun parseSkipLine(parts: List<String>, lineNo: Int, skips: MutableList<Pair<Int, LocalDate>>): String? {
+    if (parts.size != 2) return "'SKIP 날짜' 형식이어야 해요 (예: SKIP 2026-12-03)"
+    val date = parseDate(parts[1]) ?: return "날짜 '${parts[1]}'를 읽을 수 없어요 (예: 2026-12-03)"
+    skips += lineNo to date
+    return null
 }
 
 // "2026-12-01 D" 한 줄 읽기. 성공하면 null, 실패하면 오류 이유를 돌려준다

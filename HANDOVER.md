@@ -13,7 +13,8 @@
 | `e6efc61` | 알람 계산 기능 구현 — **테스트 19개 전부 통과** |
 | `a05a872` | HANDOVER.md 추가 |
 | `cc175ce` | **콘솔 근무표 입력·출력**: `schedule.txt` 읽기 → 달력 출력 → 다음 알람 — **테스트 30개 전부 통과** |
-| (다음 커밋) | **패턴 자동 채우기** (`PATTERN` 줄) + 프로젝트 `CLAUDE.md`(커밋 후 바로 push 규칙) — **테스트 39개 전부 통과** |
+| `5ec51c8` | **패턴 자동 채우기** (`PATTERN` 줄) + 프로젝트 `CLAUDE.md`(커밋 후 바로 push 규칙) — **테스트 39개 전부 통과** |
+| (다음 커밋) | **이번만 끄기(S7)** — `SKIP 날짜` 줄, 달력에 `*` 표시 — **테스트 48개 전부 통과** |
 
 - 콘솔 입출력 설계: 설계안 3개(한 줄 입력 / 메뉴형 / 파일) 중 **파일 입력 + 달력형 출력** 선택
 - 기획서에 **S8 근무표 사진으로 입력** 추가 (Android 단계에서 설계안 비교 후 진행)
@@ -61,7 +62,7 @@
 ### 남은 작업 (1단계: 콘솔)
 - [x] **3주차**: 콘솔 근무표 입력(`schedule.txt`)·달력 출력·다음 알람 표시 완료
 - [x] **5주차**: 패턴 자동 채우기 — `PATTERN 시작일 끝날 근무...` 줄, 날짜 줄이 패턴보다 우선, 패턴끼리 겹치면 아래 줄 우선
-- [ ] (선택) "이번만 끄기"(S7) 토글 함수
+- [x] **이번만 끄기(S7)**: `SKIP 날짜` 줄 (근무는 그대로, 알람만 끔), 근무 없는 날·OFF는 오류, 달력에 `E*` + 설명 줄
 - [ ] (선택) 사용 중인 근무 유형 삭제 불가 검사 함수
 
 ### 이후 (2단계: Android Studio, 6~10주차)
@@ -83,11 +84,12 @@
 | `src/main/kotlin/AlarmCalculator.kt` | `isValid()`, `alarmTimesFor()`, `nextAlarm()` |
 | `src/main/kotlin/Main.kt` | 콘솔 진입점: 파일 읽기 → 달력 출력 → 다음 알람 |
 | `src/main/kotlin/DefaultShifts.kt` | 기본 근무 유형(D 07:00, E 15:00, N 23:00, OFF) + 기본 알람 규칙(90분 전·10분 간격·3번) |
-| `src/main/kotlin/ScheduleParser.kt` | `parseSchedule()`: 날짜 줄 + PATTERN 줄 → WorkDay(날짜순), 잘못된 줄은 "n번째 줄: 이유" |
+| `src/main/kotlin/ScheduleParser.kt` | `parseSchedule()`: 날짜 줄 + PATTERN 줄 + SKIP 줄 → WorkDay(날짜순), 잘못된 줄은 "n번째 줄: 이유" |
 | `src/main/kotlin/PatternFill.kt` | `fillPattern()`: 패턴을 시작일~끝날까지 반복해서 펼치기 |
+| `src/main/kotlin/SkipAlarm.kt` | `skipAlarm()`: 특정 날짜 알람만 끈 근무표 복사본 (Android "이번만 끄기" 버튼에서 재사용 예정) |
 | `src/main/kotlin/ConsoleFormat.kt` | `formatCalendar()`(일요일 시작, 한 칸 4글자, 근무 없는 날 "-"), `nextAlarmMessage()` |
-| `schedule.txt` | 예시 근무표 (12월 전체 PATTERN + 12/25 OFF) |
-| `src/test/kotlin/*Test.kt` | 테스트: 알람 계산 18 + 파일 읽기 7 + 출력 4 + 환경 1 + 패턴 9 = 39개 |
+| `schedule.txt` | 예시 근무표 (12월 전체 PATTERN + 12/25 OFF + SKIP 12/01) |
+| `src/test/kotlin/*Test.kt` | 테스트: 알람 계산 18 + 파일 읽기 7 + 출력 4 + 환경 1 + 패턴 9 + 이번만 끄기 9 = 48개 |
 | `src/test/kotlin/SetupTest.kt` | 환경 확인용 테스트 (지워도 됨) |
 | `build.gradle.kts` | 빌드 설정 |
 
