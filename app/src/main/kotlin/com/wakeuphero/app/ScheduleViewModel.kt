@@ -5,7 +5,12 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.wakeuphero.app.alarm.AlarmScheduler
 import com.wakeuphero.app.data.ScheduleRepository
+import com.wakeuphero.core.AlarmInfo
+import com.wakeuphero.core.nextAlarmInfo
+import kotlinx.coroutines.flow.combine
+import java.time.LocalDateTime
 import com.wakeuphero.core.AlarmRule
 import com.wakeuphero.core.ShiftType
 import com.wakeuphero.core.WorkDay
@@ -25,7 +30,11 @@ import java.time.YearMonth
 // - ViewModel은 화면을 돌려도(회전) 사라지지 않는다
 // - 편집 규칙은 core 함수, 저장은 저장소(Room)에 맡기고 여기서는 둘을 이어 주기만 한다
 // - 흐름: 버튼 → core 함수로 새 근무표 계산 → 저장소에 저장 → DB가 바뀌면 Flow로 화면 자동 갱신
-class ScheduleViewModel(private val repository: ScheduleRepository) : ViewModel() {
+// - 근무표·근무 유형·알람 규칙이 바뀔 때마다 다음 알람을 계산해서 onAlarmChange로 알려준다 (→ 휴대폰 알람 예약)
+class ScheduleViewModel(
+    private val repository: ScheduleRepository,
+    private val onAlarmChange: (AlarmInfo?) -> Unit = {}
+) : ViewModel() {
 
     // stateIn: DB에서 흘러오는 Flow를 "지금 값"을 가진 StateFlow로 바꿔 화면에서 쓰기 쉽게
     val schedule: StateFlow<List<WorkDay>> = repository.schedule.asState(emptyList())
@@ -34,6 +43,12 @@ class ScheduleViewModel(private val repository: ScheduleRepository) : ViewModel(
 
     init {
         viewModelScope.launch { repository.seedDefaultsIfEmpty() }
+        // 셋 중 하나라도 바뀌면(combine) 다음 알람을 다시 계산해서 예약
+        viewModelScope.launch {
+            combine(repository.schedule, repository.shiftTypes, repository.alarmRules) { s, t, r ->
+                nextAlarmInfo(LocalDateTime.now(), s, t, r)
+            }.collect { onAlarmChange(it) }
+        }
     }
 
     fun setShift(date: LocalDate, shiftTypeId: Int) = edit { setShift(it, date, shiftTypeId) }
@@ -72,7 +87,7 @@ class ScheduleViewModel(private val repository: ScheduleRepository) : ViewModel(
         val Factory = viewModelFactory {
             initializer {
                 val app = this[APPLICATION_KEY] as WakeUpHeroApp
-                ScheduleViewModel(app.repository)
+                ScheduleViewModel(app.repository) { info -> AlarmScheduler.schedule(app, info) }
             }
         }
     }

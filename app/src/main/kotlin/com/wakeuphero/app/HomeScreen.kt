@@ -30,7 +30,8 @@ fun HomeScreen(
     alarmRules: List<AlarmRule>,
     now: LocalDateTime,
     onOpenCalendar: () -> Unit,
-    onOpenSettings: () -> Unit = {}
+    onOpenSettings: () -> Unit = {},
+    showAlarmStatus: Boolean = true // 미리보기(Preview)에서는 끄기
 ) {
     val next = nextAlarm(now, schedule, shiftTypes, alarmRules)
 
@@ -47,6 +48,7 @@ fun HomeScreen(
         }
         Button(onClick = onOpenCalendar) { Text("근무표 달력") }
         OutlinedButton(onClick = onOpenSettings) { Text("근무 유형 설정") }
+        if (showAlarmStatus) AlarmPermissionSection()
     }
 }
 
@@ -69,7 +71,8 @@ private fun HomeScreenPreview() {
             shiftTypes = defaultShiftTypes,
             alarmRules = defaultAlarmRules,
             now = start.atTime(5, 0),
-            onOpenCalendar = {}
+            onOpenCalendar = {},
+            showAlarmStatus = false
         )
     }
 }

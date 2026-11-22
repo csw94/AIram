@@ -28,21 +28,10 @@ fun alarmTimesFor(workDay: WorkDay, shiftType: ShiftType, rule: AlarmRule): List
 }
 
 // 현재 시각(now) "이후" ~ 한 달 뒤까지 중 가장 빠른 알람 1개 (없으면 null)
+// 자세한 계산은 nextAlarmInfo 한 곳에만 두고, 여기서는 시각만 꺼낸다
 fun nextAlarm(
     now: LocalDateTime,
     schedule: List<WorkDay>,
     shiftTypes: List<ShiftType>,
     rules: List<AlarmRule>
-): LocalDateTime? {
-    val limit = now.plusMonths(1)
-
-    return schedule
-        .flatMap { workDay ->
-            // 근무 유형이나 알람 규칙을 못 찾으면 그날은 알람 없음
-            val shiftType = shiftTypes.find { it.id == workDay.shiftTypeId } ?: return@flatMap emptyList()
-            val rule = rules.find { it.shiftTypeId == workDay.shiftTypeId } ?: return@flatMap emptyList()
-            alarmTimesFor(workDay, shiftType, rule)
-        }
-        .filter { it > now && it <= limit } // 방금 울린 알람(now와 같음)은 제외
-        .minOrNull()
-}
+): LocalDateTime? = nextAlarmInfo(now, schedule, shiftTypes, rules)?.time

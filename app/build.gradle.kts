@@ -25,6 +25,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true // BuildConfig.DEBUG (디버그 앱에서만 테스트 버튼 보이기)
     }
 }
 
@@ -38,6 +39,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.1") // 화면 상태 보관 (ViewModel)
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.1") // 화면이 다시 보일 때(onResume) 알기
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     // Room: 근무표·근무 유형·알람 규칙을 휴대폰에 저장하는 데이터베이스
