@@ -1,3 +1,5 @@
+package com.wakeuphero.core
+
 import java.time.LocalDateTime
 
 // 알람 규칙이 올바른지 확인

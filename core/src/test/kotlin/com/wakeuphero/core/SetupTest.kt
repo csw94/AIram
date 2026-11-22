@@ -1,3 +1,5 @@
+package com.wakeuphero.core
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

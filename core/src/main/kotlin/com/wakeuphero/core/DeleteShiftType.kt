@@ -1,3 +1,5 @@
+package com.wakeuphero.core
+
 import java.time.LocalDate
 
 // 근무 유형 삭제 결과 (셋 중 하나)

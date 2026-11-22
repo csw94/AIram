@@ -1,3 +1,5 @@
+package com.wakeuphero.core
+
 import java.time.LocalTime
 
 // 콘솔 단계에서 쓰는 기본 근무 유형 (나중에 사용자가 직접 바꿀 수 있게 할 예정)

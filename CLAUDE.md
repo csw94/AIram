@@ -1,11 +1,12 @@
 # AIram 프로젝트 규칙
 
 - 작업을 시작하기 전에 `HANDOVER.md`와 `alarm_app_plan.md`를 먼저 읽는다.
-- 테스트 `./gradlew test`, 실행 `./gradlew run`
+- core 테스트 `./gradlew :core:test`, 콘솔 실행 `./gradlew :core:run`, 앱 빌드 `./gradlew :app:assembleDebug`
+- 구조: `core`(순수 Kotlin 로직·테스트) + `app`(Android Compose). 계산·규칙은 core에 TDD로, app은 화면·저장·알람 예약만
 
 ## 진행 방식 (이 프로젝트에서는 전역 CLAUDE.md의 "선 질문·설계안 선택" 규칙보다 우선)
 - **단계(기능 하나)가 끝나면 묻지 않고 바로 커밋 + `git push`** 한다. (원격: `origin` = https://github.com/csw94/AIram, 브랜치 `main`)
-  - 커밋 전 `./gradlew test` 전부 통과 확인, `HANDOVER.md` 갱신
+  - 커밋 전 `./gradlew :core:test :app:assembleDebug` 성공 확인, `HANDOVER.md` 갱신
 - **분기점(설계안 선택 등)이 생기면 묻지 않고 추천안으로 진행**한다.
   - 설계안 3개 비교는 그대로 하되, 질문 대신 단계 보고에 "비교한 안 / 고른 추천안 / 이유"를 짧게 남긴다.
 - **문제가 생기거나 아래 경우에만 멈추고 묻는다.** 그 외에는 다음 단계까지 알아서 쭉 진행한다.

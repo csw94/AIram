@@ -1,3 +1,5 @@
+package com.wakeuphero.core
+
 import java.io.File
 import java.io.PrintStream
 import java.time.LocalDateTime

@@ -1,3 +1,5 @@
+package com.wakeuphero.core
+
 import java.time.LocalDate
 
 // 근무표에서 date 날의 알람만 "이번만 끄기" 한 새 근무표를 돌려준다 (근무는 그대로)

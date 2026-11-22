@@ -1,36 +1,6 @@
+// 루트 프로젝트: 각 모듈이 쓸 플러그인 버전만 정해 둔다 (apply false = 여기서는 적용 안 함)
 plugins {
-    kotlin("jvm") version "2.4.21"
-    application
-}
-
-group = "com.wakeme"
-version = "0.1.0"
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    // 테스트 코드 작성용 (JUnit 5 기반 kotlin.test)
-    testImplementation(kotlin("test"))
-}
-
-kotlin {
-    // 설치된 JDK로 빌드하되, 결과물은 Android에서도 쓰기 좋은 Java 17 기준으로 만든다
-    compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
-    }
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
-}
-
-application {
-    mainClass.set("MainKt")
-}
-
-tasks.test {
-    useJUnitPlatform()
+    id("com.android.application") version "9.5.2" apply false
+    kotlin("jvm") version "2.4.21" apply false
+    kotlin("plugin.compose") version "2.4.21" apply false
 }

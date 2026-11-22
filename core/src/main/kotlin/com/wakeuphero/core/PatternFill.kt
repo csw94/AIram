@@ -1,3 +1,5 @@
+package com.wakeuphero.core
+
 import java.time.LocalDate
 
 // 근무 패턴(근무 유형 id 목록)을 start ~ end(끝날 포함)까지 반복해서 날짜별 근무로 펼친다
