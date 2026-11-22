@@ -35,6 +35,25 @@ interface AppDao {
     @Upsert
     suspend fun upsertAlarmRules(rules: List<AlarmRuleEntity>)
 
+    @Query("DELETE FROM shift_types WHERE id = :id")
+    suspend fun deleteShiftTypeRow(id: Int)
+
+    @Query("DELETE FROM alarm_rules WHERE shiftTypeId = :id")
+    suspend fun deleteAlarmRule(id: Int)
+
+    // 근무 유형과 그 알람 규칙을 함께 저장/삭제 (한 묶음)
+    @Transaction
+    suspend fun saveShiftType(type: ShiftTypeEntity, rule: AlarmRuleEntity?) {
+        upsertShiftTypes(listOf(type))
+        if (rule != null) upsertAlarmRules(listOf(rule)) else deleteAlarmRule(type.id) // 휴무면 규칙 없음
+    }
+
+    @Transaction
+    suspend fun deleteShiftType(id: Int) {
+        deleteAlarmRule(id)
+        deleteShiftTypeRow(id)
+    }
+
     // @Transaction: 넣기와 지우기를 한 묶음으로 → 중간에 앱이 꺼져도 반만 저장되는 일이 없다
     @Transaction
     suspend fun applyScheduleChanges(upserts: List<WorkDayEntity>, deletions: List<String>) {

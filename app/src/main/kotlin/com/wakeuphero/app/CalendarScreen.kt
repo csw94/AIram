@@ -138,7 +138,7 @@ fun CalendarScreen(
 // 달력 한 칸: 날짜 숫자 + 근무 약어 (근무 색 배경)
 @Composable
 private fun DayCell(date: LocalDate, shift: ShiftType?, skipped: Boolean, onClick: () -> Unit) {
-    val background = shift?.let { hexColor(it.color).copy(alpha = 0.45f) } ?: Color(0x11000000)
+    val background = shift?.let { hexToColor(it.color).copy(alpha = 0.45f) } ?: Color(0x11000000)
     Column(
         modifier = Modifier
             .fillMaxSize() // 칸 전체를 채워서 모든 칸의 크기를 똑같이
@@ -231,10 +231,6 @@ private fun PatternDialog(
         dismissButton = { TextButton(onClick = onDismiss) { Text("취소") } }
     )
 }
-
-// "#FFD54F" → Compose 색
-private fun hexColor(hex: String): Color =
-    runCatching { Color(android.graphics.Color.parseColor(hex)) }.getOrDefault(Color.LightGray)
 
 @Preview(showBackground = true, heightDp = 640)
 @Composable

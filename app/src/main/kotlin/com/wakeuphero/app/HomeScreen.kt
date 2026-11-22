@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -28,7 +29,8 @@ fun HomeScreen(
     shiftTypes: List<ShiftType>,
     alarmRules: List<AlarmRule>,
     now: LocalDateTime,
-    onOpenCalendar: () -> Unit
+    onOpenCalendar: () -> Unit,
+    onOpenSettings: () -> Unit = {}
 ) {
     val next = nextAlarm(now, schedule, shiftTypes, alarmRules)
 
@@ -44,6 +46,7 @@ fun HomeScreen(
             Text("아직 근무표가 없어요. 달력에서 [패턴으로 채우기]로 시작해 보세요!", style = MaterialTheme.typography.bodyMedium)
         }
         Button(onClick = onOpenCalendar) { Text("근무표 달력") }
+        OutlinedButton(onClick = onOpenSettings) { Text("근무 유형 설정") }
     }
 }
 

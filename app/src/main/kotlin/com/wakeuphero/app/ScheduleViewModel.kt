@@ -9,6 +9,7 @@ import com.wakeuphero.app.data.ScheduleRepository
 import com.wakeuphero.core.AlarmRule
 import com.wakeuphero.core.ShiftType
 import com.wakeuphero.core.WorkDay
+import com.wakeuphero.core.DeleteShiftResult
 import com.wakeuphero.core.applyPattern
 import com.wakeuphero.core.removeShift
 import com.wakeuphero.core.setShift
@@ -44,6 +45,17 @@ class ScheduleViewModel(private val repository: ScheduleRepository) : ViewModel(
     // 그 달 전체(1일 ~ 말일)를 패턴으로 다시 채운다
     fun applyPatternToMonth(month: YearMonth, pattern: List<Int>) =
         edit { applyPattern(it, month.atDay(1), month.atEndOfMonth(), pattern) }
+
+    // 근무 유형 저장 (검사는 화면에서 core의 validateShiftType으로 먼저 한다)
+    fun saveShiftType(type: ShiftType, rule: AlarmRule?) =
+        viewModelScope.launch { repository.saveShiftType(type, rule) }
+
+    // 근무 유형 삭제: 근무표에서 쓰고 있으면 지우지 않고 InUse(날짜들)를 돌려준다 (판단은 core)
+    fun deleteShiftType(id: Int): DeleteShiftResult {
+        val result = com.wakeuphero.core.deleteShiftType(shiftTypes.value, alarmRules.value, schedule.value, id)
+        if (result is DeleteShiftResult.Deleted) viewModelScope.launch { repository.deleteShiftType(id) }
+        return result
+    }
 
     // 지금 근무표에 change를 적용한 결과를 저장 (바뀐 부분만 DB에 반영됨)
     private fun edit(change: (List<WorkDay>) -> List<WorkDay>) {

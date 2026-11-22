@@ -24,6 +24,12 @@ class ScheduleRepository(private val dao: AppDao) {
         }
     }
 
+    // 근무 유형 저장 (휴무면 rule = null → 알람 규칙 삭제)
+    suspend fun saveShiftType(type: ShiftType, rule: AlarmRule?) =
+        dao.saveShiftType(type.toEntity(), rule?.toEntity())
+
+    suspend fun deleteShiftType(id: Int) = dao.deleteShiftType(id)
+
     // 근무표 before → after 에서 바뀐 부분만 저장 (어떤 게 바뀌었는지는 core의 scheduleDiff가 계산)
     suspend fun saveSchedule(before: List<WorkDay>, after: List<WorkDay>) {
         val diff = scheduleDiff(before, after)
