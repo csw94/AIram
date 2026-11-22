@@ -1,48 +1,67 @@
 package com.wakeuphero.app
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.wakeuphero.app.data.ScheduleRepository
 import com.wakeuphero.core.AlarmRule
 import com.wakeuphero.core.ShiftType
 import com.wakeuphero.core.WorkDay
 import com.wakeuphero.core.applyPattern
-import com.wakeuphero.core.defaultAlarmRules
-import com.wakeuphero.core.defaultShiftTypes
-import com.wakeuphero.core.fillPattern
 import com.wakeuphero.core.removeShift
 import com.wakeuphero.core.setShift
 import com.wakeuphero.core.toggleSkip
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.YearMonth
 
 // 화면들이 함께 쓰는 근무표 상태를 들고 있는 곳
 // - ViewModel은 화면을 돌려도(회전) 사라지지 않는다
-// - 실제 계산·편집 규칙은 전부 core 함수에 맡기고, 여기서는 "상태를 바꿔 끼우기"만 한다
-// - ⚠️ 아직 저장 기능이 없어서 앱을 끄면 초기화된다 (M3에서 Room으로 저장 예정)
-class ScheduleViewModel : ViewModel() {
+// - 편집 규칙은 core 함수, 저장은 저장소(Room)에 맡기고 여기서는 둘을 이어 주기만 한다
+// - 흐름: 버튼 → core 함수로 새 근무표 계산 → 저장소에 저장 → DB가 바뀌면 Flow로 화면 자동 갱신
+class ScheduleViewModel(private val repository: ScheduleRepository) : ViewModel() {
 
-    val shiftTypes: List<ShiftType> = defaultShiftTypes
-    val rules: List<AlarmRule> = defaultAlarmRules
+    // stateIn: DB에서 흘러오는 Flow를 "지금 값"을 가진 StateFlow로 바꿔 화면에서 쓰기 쉽게
+    val schedule: StateFlow<List<WorkDay>> = repository.schedule.asState(emptyList())
+    val shiftTypes: StateFlow<List<ShiftType>> = repository.shiftTypes.asState(emptyList())
+    val alarmRules: StateFlow<List<AlarmRule>> = repository.alarmRules.asState(emptyList())
 
-    // 처음에는 이번 달을 예시 패턴(D D E E N N OFF OFF)으로 채워 둔다
-    private val _schedule = MutableStateFlow(examplePattern())
-    val schedule: StateFlow<List<WorkDay>> = _schedule.asStateFlow()
+    init {
+        viewModelScope.launch { repository.seedDefaultsIfEmpty() }
+    }
 
-    fun setShift(date: LocalDate, shiftTypeId: Int) = _schedule.update { setShift(it, date, shiftTypeId) }
+    fun setShift(date: LocalDate, shiftTypeId: Int) = edit { setShift(it, date, shiftTypeId) }
 
-    fun removeShift(date: LocalDate) = _schedule.update { removeShift(it, date) }
+    fun removeShift(date: LocalDate) = edit { removeShift(it, date) }
 
-    fun toggleSkip(date: LocalDate) = _schedule.update { toggleSkip(it, date) }
+    fun toggleSkip(date: LocalDate) = edit { toggleSkip(it, date) }
 
     // 그 달 전체(1일 ~ 말일)를 패턴으로 다시 채운다
     fun applyPatternToMonth(month: YearMonth, pattern: List<Int>) =
-        _schedule.update { applyPattern(it, month.atDay(1), month.atEndOfMonth(), pattern) }
+        edit { applyPattern(it, month.atDay(1), month.atEndOfMonth(), pattern) }
 
-    private fun examplePattern(): List<WorkDay> {
-        val month = YearMonth.now()
-        return fillPattern(month.atDay(1), month.atEndOfMonth(), listOf(1, 1, 2, 2, 3, 3, 4, 4))
+    // 지금 근무표에 change를 적용한 결과를 저장 (바뀐 부분만 DB에 반영됨)
+    private fun edit(change: (List<WorkDay>) -> List<WorkDay>) {
+        val before = schedule.value
+        val after = change(before)
+        viewModelScope.launch { repository.saveSchedule(before, after) }
+    }
+
+    private fun <T> kotlinx.coroutines.flow.Flow<T>.asState(initial: T): StateFlow<T> =
+        stateIn(viewModelScope, SharingStarted.Eagerly, initial)
+
+    companion object {
+        // ViewModel에 저장소를 넘겨주는 공장 (앱 객체에서 저장소를 꺼내 온다)
+        val Factory = viewModelFactory {
+            initializer {
+                val app = this[APPLICATION_KEY] as WakeUpHeroApp
+                ScheduleViewModel(app.repository)
+            }
+        }
     }
 }

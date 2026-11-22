@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.wakeuphero.core.AlarmRule
 import com.wakeuphero.core.ShiftType
 import com.wakeuphero.core.WorkDay
 import com.wakeuphero.core.defaultAlarmRules
@@ -25,10 +26,11 @@ import java.time.LocalDateTime
 fun HomeScreen(
     schedule: List<WorkDay>,
     shiftTypes: List<ShiftType>,
+    alarmRules: List<AlarmRule>,
     now: LocalDateTime,
     onOpenCalendar: () -> Unit
 ) {
-    val next = nextAlarm(now, schedule, shiftTypes, defaultAlarmRules)
+    val next = nextAlarm(now, schedule, shiftTypes, alarmRules)
 
     Column(
         modifier = Modifier.padding(24.dp),
@@ -38,6 +40,9 @@ fun HomeScreen(
         Text("오늘: " + describeDay(schedule, shiftTypes, now.toLocalDate()), style = MaterialTheme.typography.titleMedium)
         Text("내일: " + describeDay(schedule, shiftTypes, now.toLocalDate().plusDays(1)))
         Text(nextAlarmMessage(next), style = MaterialTheme.typography.bodyLarge)
+        if (schedule.isEmpty()) {
+            Text("아직 근무표가 없어요. 달력에서 [패턴으로 채우기]로 시작해 보세요!", style = MaterialTheme.typography.bodyMedium)
+        }
         Button(onClick = onOpenCalendar) { Text("근무표 달력") }
     }
 }
@@ -59,6 +64,7 @@ private fun HomeScreenPreview() {
         HomeScreen(
             schedule = fillPattern(start, start.plusDays(30), listOf(1, 1, 2, 2, 3, 3, 4, 4)),
             shiftTypes = defaultShiftTypes,
+            alarmRules = defaultAlarmRules,
             now = start.atTime(5, 0),
             onOpenCalendar = {}
         )

@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")   // AGP 9부터 Kotlin 지원이 기본 포함
     kotlin("plugin.compose")        // Jetpack Compose 컴파일러
+    id("com.google.devtools.ksp")   // Room이 DB 코드를 자동으로 만들어 줄 때 사용
 }
 
 android {
@@ -38,4 +39,9 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.13.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.1") // 화면 상태 보관 (ViewModel)
     debugImplementation("androidx.compose.ui:ui-tooling")
+
+    // Room: 근무표·근무 유형·알람 규칙을 휴대폰에 저장하는 데이터베이스
+    implementation("androidx.room:room-runtime:2.8.5")
+    implementation("androidx.room:room-ktx:2.8.5")
+    ksp("androidx.room:room-compiler:2.8.5")
 }
