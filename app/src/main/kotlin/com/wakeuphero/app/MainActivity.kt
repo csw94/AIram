@@ -19,7 +19,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import java.time.LocalDateTime
 
 // 앱에 있는 화면 목록
-enum class Screen { HOME, CALENDAR, SHIFT_LIST, SHIFT_EDIT }
+enum class Screen { HOME, CALENDAR, SHIFT_LIST, SHIFT_EDIT, GENERAL_LIST, GENERAL_EDIT }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,18 +39,22 @@ class MainActivity : ComponentActivity() {
 fun App(vm: ScheduleViewModel = viewModel(factory = ScheduleViewModel.Factory)) {
     var screen by rememberSaveable { mutableStateOf(Screen.HOME) }
     var editingShiftId by rememberSaveable { mutableStateOf<Int?>(null) } // null = 새로 만들기
+    var editingAlarmId by rememberSaveable { mutableStateOf<Int?>(null) }  // null = 새로 만들기
     val schedule by vm.schedule.collectAsState()
     val shiftTypes by vm.shiftTypes.collectAsState()
     val alarmRules by vm.alarmRules.collectAsState()
+    val generalAlarms by vm.generalAlarms.collectAsState()
 
     when (screen) {
         Screen.HOME -> HomeScreen(
             schedule = schedule,
             shiftTypes = shiftTypes,
             alarmRules = alarmRules,
+            generalAlarms = generalAlarms,
             now = LocalDateTime.now(),
             onOpenCalendar = { screen = Screen.CALENDAR },
-            onOpenSettings = { screen = Screen.SHIFT_LIST }
+            onOpenSettings = { screen = Screen.SHIFT_LIST },
+            onOpenGeneralAlarms = { screen = Screen.GENERAL_LIST }
         )
 
         Screen.CALENDAR -> {
@@ -86,6 +90,28 @@ fun App(vm: ScheduleViewModel = viewModel(factory = ScheduleViewModel.Factory)) 
                 onSave = vm::saveShiftType,
                 onDelete = vm::deleteShiftType,
                 onClose = { screen = Screen.SHIFT_LIST }
+            )
+        }
+
+        Screen.GENERAL_LIST -> {
+            BackHandler { screen = Screen.HOME }
+            GeneralAlarmListScreen(
+                alarms = generalAlarms,
+                now = LocalDateTime.now(),
+                onBack = { screen = Screen.HOME },
+                onEdit = { id -> editingAlarmId = id; screen = Screen.GENERAL_EDIT },
+                onToggle = vm::setGeneralAlarmEnabled
+            )
+        }
+
+        Screen.GENERAL_EDIT -> {
+            BackHandler { screen = Screen.GENERAL_LIST }
+            GeneralAlarmEditScreen(
+                original = generalAlarms.find { it.id == editingAlarmId },
+                now = LocalDateTime.now(),
+                onSave = { vm.saveGeneralAlarm(it) },
+                onDelete = { vm.deleteGeneralAlarm(it) },
+                onClose = { screen = Screen.GENERAL_LIST }
             )
         }
     }

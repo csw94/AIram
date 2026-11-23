@@ -7,10 +7,8 @@ import android.content.Intent
 import android.os.Build
 import com.wakeuphero.app.MainActivity
 import com.wakeuphero.app.WakeUpHeroApp
-import com.wakeuphero.core.AlarmInfo
-import com.wakeuphero.core.alarmText
-import com.wakeuphero.core.alarmTitle
-import com.wakeuphero.core.nextAlarmInfo
+import com.wakeuphero.core.UpcomingAlarm
+import com.wakeuphero.core.nextUpcomingAlarm
 import kotlinx.coroutines.flow.first
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -18,32 +16,33 @@ import java.time.ZoneId
 // 휴대폰의 알람 시계(AlarmManager)에 "다음 알람 하나만" 예약한다 (도미노 방식)
 // - 울리면 AlarmReceiver가 다시 rescheduleFromDb()를 불러 그다음 알람을 예약
 object AlarmScheduler {
-    private const val REQUEST_NEXT = 0   // 근무표 알람 자리
+    private const val REQUEST_NEXT = 0   // 다음 알람 자리 (근무·일반 알람 중 가장 빠른 것)
     private const val REQUEST_SNOOZE = 1 // 다시 알림·테스트 자리 (근무표 알람과 따로)
 
     fun canScheduleExact(context: Context): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
             context.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
 
-    // 다음 알람 예약 (info == null 이면 예약 취소)
-    fun schedule(context: Context, info: AlarmInfo?) {
-        if (info == null) {
+    // 다음 알람 예약 (alarm == null 이면 예약 취소)
+    fun schedule(context: Context, alarm: UpcomingAlarm?) {
+        if (alarm == null) {
             cancel(context, REQUEST_NEXT)
             return
         }
-        setAlarm(context, REQUEST_NEXT, info.time, alarmTitle(info), alarmText(info))
+        setAlarm(context, REQUEST_NEXT, alarm.time, alarm.title, alarm.text)
     }
 
     // DB에서 최신 근무표를 읽어 다음 알람을 다시 예약 (울린 뒤, 재부팅 뒤, 시간 변경 뒤)
     suspend fun rescheduleFromDb(context: Context) {
         val repo = (context.applicationContext as WakeUpHeroApp).repository
-        val info = nextAlarmInfo(
+        val next = nextUpcomingAlarm(
             LocalDateTime.now(),
             repo.schedule.first(),
             repo.shiftTypes.first(),
-            repo.alarmRules.first()
+            repo.alarmRules.first(),
+            repo.generalAlarms.first()
         )
-        schedule(context, info)
+        schedule(context, next)
     }
 
     fun snooze(context: Context, minutes: Long, title: String, text: String) =

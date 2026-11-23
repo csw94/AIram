@@ -1,6 +1,7 @@
 package com.wakeuphero.app.data
 
 import com.wakeuphero.core.AlarmRule
+import com.wakeuphero.core.GeneralAlarm
 import com.wakeuphero.core.ShiftType
 import com.wakeuphero.core.WorkDay
 import com.wakeuphero.core.defaultAlarmRules
@@ -15,6 +16,7 @@ class ScheduleRepository(private val dao: AppDao) {
     val schedule: Flow<List<WorkDay>> = dao.observeWorkDays().map { list -> list.map { it.toCore() } }
     val shiftTypes: Flow<List<ShiftType>> = dao.observeShiftTypes().map { list -> list.map { it.toCore() } }
     val alarmRules: Flow<List<AlarmRule>> = dao.observeAlarmRules().map { list -> list.map { it.toCore() } }
+    val generalAlarms: Flow<List<GeneralAlarm>> = dao.observeGeneralAlarms().map { list -> list.map { it.toCore() } }
 
     // 처음 실행이면 기본 근무 유형(D/E/N/OFF)과 알람 규칙을 넣어 둔다
     suspend fun seedDefaultsIfEmpty() {
@@ -29,6 +31,11 @@ class ScheduleRepository(private val dao: AppDao) {
         dao.saveShiftType(type.toEntity(), rule?.toEntity())
 
     suspend fun deleteShiftType(id: Int) = dao.deleteShiftType(id)
+
+    // 일반 알람: id 0 = 새로 만들기
+    suspend fun saveGeneralAlarm(alarm: GeneralAlarm) = dao.upsertGeneralAlarm(alarm.toEntity())
+    suspend fun setGeneralAlarmEnabled(id: Int, enabled: Boolean) = dao.setGeneralAlarmEnabled(id, enabled)
+    suspend fun deleteGeneralAlarm(id: Int) = dao.deleteGeneralAlarm(id)
 
     // 근무표 before → after 에서 바뀐 부분만 저장 (어떤 게 바뀌었는지는 core의 scheduleDiff가 계산)
     suspend fun saveSchedule(before: List<WorkDay>, after: List<WorkDay>) {

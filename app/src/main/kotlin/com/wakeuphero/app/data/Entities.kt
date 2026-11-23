@@ -3,8 +3,10 @@ package com.wakeuphero.app.data
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.wakeuphero.core.AlarmRule
+import com.wakeuphero.core.GeneralAlarm
 import com.wakeuphero.core.ShiftType
 import com.wakeuphero.core.WorkDay
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -44,3 +46,25 @@ fun AlarmRule.toEntity() = AlarmRuleEntity(shiftTypeId, minutesBefore, intervalM
 
 fun WorkDayEntity.toCore() = WorkDay(LocalDate.parse(date), shiftTypeId, alarmSkipped)
 fun WorkDay.toEntity() = WorkDayEntity(date.toString(), shiftTypeId, alarmSkipped)
+
+// 일반 알람 (M6, DB version 2에서 추가)
+@Entity(tableName = "general_alarms")
+data class GeneralAlarmEntity(
+    @PrimaryKey(autoGenerate = true) val id: Int, // 0 으로 넣으면 DB가 새 번호를 붙여 준다
+    val label: String,
+    val time: String,    // "07:30"
+    val days: String,    // 반복 요일 "1,3,5" (월=1 … 일=7), 한 번만이면 ""
+    val date: String?,   // 한 번만 울릴 날 "2026-12-01", 반복이면 null
+    val enabled: Boolean
+)
+
+fun GeneralAlarmEntity.toCore() = GeneralAlarm(
+    id, label, LocalTime.parse(time),
+    days.split(",").mapNotNull { it.toIntOrNull() }.map(DayOfWeek::of).toSet(),
+    date?.let(LocalDate::parse), enabled
+)
+fun GeneralAlarm.toEntity() = GeneralAlarmEntity(
+    id, label, time.toString(),
+    days.sorted().joinToString(",") { it.value.toString() },
+    if (isRepeating) null else date?.toString(), enabled
+)

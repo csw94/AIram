@@ -110,3 +110,13 @@ fun repeatDaysText(days: Set<DayOfWeek>): String = when (days) {
 }
 
 fun dayName(day: DayOfWeek): String = "월화수목금토일"[day.value - 1].toString()
+
+private val dateFormat = DateTimeFormatter.ofPattern("uuuu-MM-dd").withResolverStyle(java.time.format.ResolverStyle.STRICT)
+
+// "2026-12-01" → 날짜 (모양이 다르거나 없는 날짜면 null). STRICT: 2월 30일 같은 날을 말일로 바꿔 주지 않음
+fun parseDateText(text: String): LocalDate? =
+    try {
+        LocalDate.parse(text.trim(), dateFormat)
+    } catch (e: java.time.format.DateTimeParseException) {
+        null
+    }

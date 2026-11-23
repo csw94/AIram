@@ -20,6 +20,18 @@ interface AppDao {
     @Query("SELECT * FROM alarm_rules")
     fun observeAlarmRules(): Flow<List<AlarmRuleEntity>>
 
+    @Query("SELECT * FROM general_alarms ORDER BY time, id")
+    fun observeGeneralAlarms(): Flow<List<GeneralAlarmEntity>>
+
+    @Upsert
+    suspend fun upsertGeneralAlarm(alarm: GeneralAlarmEntity)
+
+    @Query("UPDATE general_alarms SET enabled = :enabled WHERE id = :id")
+    suspend fun setGeneralAlarmEnabled(id: Int, enabled: Boolean)
+
+    @Query("DELETE FROM general_alarms WHERE id = :id")
+    suspend fun deleteGeneralAlarm(id: Int)
+
     @Query("SELECT COUNT(*) FROM shift_types")
     suspend fun countShiftTypes(): Int
 

@@ -22,7 +22,8 @@
 | `b39b5f4` | **M4 근무 유형 설정 화면** — core `ShiftTypeEdit.kt`(검사·새 id·시간 읽기·알람 미리보기, 테스트 12개), app 목록·편집 화면, 저장·삭제(사용 중이면 막기) — core 테스트 81개 통과, 에뮬레이터 확인 |
 | `e76caf7` | **M5 실제 알람** — core `AlarmInfo.kt`(몇 번째 알람인지·알람 글, 테스트 5개), app `alarm/`(예약·리시버·알림·알람 화면), 권한 안내, 디버그 테스트 버튼 — core 테스트 86개 통과, 에뮬레이터에서 울림·끄기·다시 알림·재부팅 재예약 확인 |
 | `948b4bd` | **실기기 테스트 1차 반영** — 무음·방해 금지·절전 모드에서 안 울림 → 소리·진동을 `AlarmService`(포그라운드 서비스)가 알람 볼륨으로 직접 재생, 알림 채널은 조용한 `alarm_v2` — 에뮬레이터 무음 모드에서 재생 확인 |
-| (이 커밋) | **M6-1 일반 알람 core** — `GeneralAlarm.kt`(한 번/요일 반복, 켜기·끄기, 근무+일반 합친 `upcomingAlarms`·`nextUpcomingAlarm`, 검사, 요일 글), `AlarmInfo`의 근무 알람 목록을 `workAlarmInfos`로 분리 — core 테스트 99개 통과 |
+| `fdb66d2` | **M6-1 일반 알람 core** — `GeneralAlarm.kt`(한 번/요일 반복, 켜기·끄기, 근무+일반 합친 `upcomingAlarms`·`nextUpcomingAlarm`, 검사, 요일 글), `AlarmInfo`의 근무 알람 목록을 `workAlarmInfos`로 분리 — core 테스트 99개 통과 |
+| (이 커밋) | **M6-2 일반 알람 앱** — DB version 2(general_alarms 표 + 마이그레이션 1→2), 일반 알람 목록(켜기·끄기)·편집(시각·이름·반복 요일·날짜·삭제) 화면, 홈에 오늘·내일 알람 목록, 예약을 `nextUpcomingAlarm`(근무+일반)으로 교체, core `parseDateText`(테스트 1개) — core 테스트 100개, 에뮬레이터에서 마이그레이션(근무표 유지)·추가·예약·울림·다음 예약·알림 [끄기]·"지남" 표시 확인 |
 
 - 콘솔 입출력 설계: 파일 입력 + 달력형 출력
 - 기획서에 **S8 근무표 사진으로 입력** 추가 (Android 단계에서 설계안 비교 후 진행)
@@ -81,7 +82,7 @@ AIram/
 
 ## 3. 현재 진행 상태 및 남은 작업
 
-**현재 위치: M6-1(일반 알람 core 계산) 완료 → 다음은 M6-2(app: DB 저장·목록·편집 화면·예약 연결)**
+**현재 위치: M6-2(일반 알람 앱) 완료 → 남은 것: 휴대폰에서 일반 알람 확인, M6 추가 기능(A1~A5 중 선택)·회고**
 
 ### 1단계: 콘솔 ✅ 전부 완료
 - 콘솔 입출력, 패턴 자동 채우기, 이번만 끄기, 근무 유형 삭제 막기
@@ -95,7 +96,7 @@ AIram/
 - [x] **실기기 테스트** (사용자 삼성 휴대폰) — 1차 4·5·6 실패 → 소리 재생을 포그라운드 서비스로 바꿔 2차 전부 정상
 - [ ] **M6** 일반 알람(F1~F6)
   - [x] M6-1 core: GeneralAlarm 모델·울릴 시각·근무와 합친 다가오는 알람·검사 (테스트 13개)
-  - [ ] M6-2 app: Room에 general_alarms 표(DB version 2 + 마이그레이션), 알람 목록(F2·F3·F4)·편집 화면(F1·F6), 예약을 nextUpcomingAlarm으로 교체
+  - [x] M6-2 app: Room에 general_alarms 표(DB version 2 + 마이그레이션), 알람 목록(F2·F3·F4)·편집 화면(F1·F6), 예약을 nextUpcomingAlarm으로 교체
   - [ ] 추가 기능·회고
 - [ ] (추가) S8 근무표 사진 입력 — 설계안 비교 후
 
@@ -117,20 +118,21 @@ AIram/
 | `app/build.gradle.kts` | app 빌드 (AGP, Compose, `implementation(project(":core"))`) |
 | `core/src/main/kotlin/com/wakeuphero/core/` | `GeneralAlarm`(GeneralAlarm·generalAlarmTimes·UpcomingAlarm·upcomingAlarms·nextUpcomingAlarm·validateGeneralAlarm·defaultOneTimeDate·repeatDaysText) `AlarmInfo`(nextAlarmInfo·alarmTitle·alarmText, nextAlarm은 이걸 재사용) `ShiftTypeEdit`(validateShiftType·nextShiftTypeId·parseTimeText·alarmPreview) `ScheduleDiff` `ScheduleEdit`(setShift·removeShift·toggleSkip·applyPattern·parsePatternCodes·monthGrid) `Models` `AlarmCalculator` `DefaultShifts` `ScheduleParser` `PatternFill` `SkipAlarm` `DeleteShiftType` `ConsoleFormat` `Main`(콘솔) |
 | `core/src/test/kotlin/com/wakeuphero/core/` | 테스트 99개 (알람 계산 18, 파일 읽기 7, 출력 4, 환경 1, 패턴 9, 이번만 끄기 9, 유형 삭제 6, 근무표 편집 10, 저장 차이 5, 근무 유형 편집 12, 알람 정보 5, 일반 알람 13) |
-| `app/src/main/kotlin/com/wakeuphero/app/MainActivity.kt` | `App()`: 화면 전환(enum Screen: HOME, CALENDAR, SHIFT_LIST, SHIFT_EDIT), 뒤로가기 |
+| `app/src/main/kotlin/com/wakeuphero/app/MainActivity.kt` | `App()`: 화면 전환(enum Screen: HOME, CALENDAR, SHIFT_LIST, SHIFT_EDIT, GENERAL_LIST, GENERAL_EDIT), 뒤로가기 |
 | `app/.../ScheduleViewModel.kt` | 저장소의 Flow → StateFlow, 편집 = core 함수로 새 근무표 계산 → 저장소에 저장 → DB 갱신으로 화면 자동 반영. `Factory`로 저장소 주입 |
-| `app/.../HomeScreen.kt` | 오늘·내일 근무, 다음 알람, [근무표 달력] 버튼 |
+| `app/.../HomeScreen.kt` | 오늘·내일 근무, 다음 알람(근무+일반), 오늘·내일 알람 목록(최대 8개), [근무표 달력][근무 유형 설정][일반 알람] |
 | `app/.../CalendarScreen.kt` | 달력(monthGrid), 날짜 창(DayDialog), 패턴 창(PatternDialog), 근무 색 배경 |
 | `app/.../SettingsScreen.kt` | `ShiftTypeListScreen`(목록), `ShiftTypeEditScreen`(편집·검사·삭제), 공용 `hexToColor()` |
+| `app/.../GeneralAlarmScreen.kt` | `GeneralAlarmListScreen`(목록·스위치·지남 표시), `GeneralAlarmEditScreen`(시각·이름·요일 칩·날짜·오늘/내일 버튼·검사·삭제) |
 | `app/.../AlarmPermissionSection.kt` | 홈 화면의 권한 안내(알림·정확한 알람·전체 화면) + 디버그용 "10초 뒤 테스트 알람" 버튼 |
 | `app/.../alarm/AlarmScheduler.kt` | `setAlarmClock`으로 다음 알람 1개 예약(요청코드 0), 다시 알림·테스트(요청코드 1), `rescheduleFromDb()` |
 | `app/.../alarm/AlarmReceiver.kt` | 알람 시각 → 알림 띄우고 다음 알람 예약 / 알림 버튼 [끄기][5분 뒤] / `SystemEventReceiver`: 재부팅·시간 변경·앱 업데이트·권한 변경 시 재예약 |
 | `app/.../alarm/AlarmNotifications.kt` | 알람 알림(조용한 채널 alarm_v2, 옛 alarm_v1 삭제), 전체 화면 인텐트, 버튼 2개 — `build()`로 알림만 만들어 서비스에 넘김 |
 | `app/.../alarm/AlarmService.kt` | 포그라운드 서비스(mediaPlayback): MediaPlayer(USAGE_ALARM, 반복) + 진동(USAGE_ALARM) + 웨이크락(최대 10분). `start()`/`stop()` |
 | `app/.../alarm/AlarmActivity.kt` | 알람 울림 화면 (잠금 화면 위·화면 켜기, 끄기·5분 뒤) |
-| `app/.../data/Entities.kt` | DB 표 3개(shift_types, alarm_rules, work_days) + core ↔ DB 변환 (날짜·시각은 글자로 저장) |
+| `app/.../data/Entities.kt` | DB 표 4개(shift_types, alarm_rules, work_days, general_alarms — 요일은 "1,3,5" 글자) + core ↔ DB 변환 (날짜·시각은 글자로 저장) |
 | `app/.../data/AppDao.kt` | 조회는 Flow(자동 갱신), `applyScheduleChanges()`는 @Transaction으로 넣기·지우기 한 묶음 |
-| `app/.../data/AppDatabase.kt` | Room DB (파일명 wakeuphero.db, version 1) |
+| `app/.../data/AppDatabase.kt` | Room DB (파일명 wakeuphero.db, **version 2**, `MIGRATION_1_2` = general_alarms 표 추가) |
 | `app/.../data/ScheduleRepository.kt` | core 모양으로만 주고받는 저장소, `saveSchedule(before, after)` = scheduleDiff로 바뀐 부분만 저장 |
 | `app/.../WakeUpHeroApp.kt` | Application: DB·저장소를 앱에 하나만 생성 |
 | `app/src/main/AndroidManifest.xml`, `res/values/strings.xml` | 앱 이름 "일어나세요용사여" |
@@ -169,3 +171,6 @@ AIram/
 - 제가 정한 것: 웨이크락 최대 10분(소리는 끌 때까지 계속), 알람음 없으면 벨소리→알림음 순으로 대체
 - 분기점 기록(M6-1): 근무·일반 알람 합치기 **core의 upcomingAlarms 하나로 함께 정렬**(vs 따로 계산해 앱에서 비교 / 일반 알람을 가짜 근무로 변환) — F2 목록과 예약이 같은 함수를 씀
 - 제가 정한 것(M6-1): 반복 요일이 없으면 '한 번만'(날짜 필요), 이름은 비워도 됨(→ '알람')·20글자까지, 같은 시각이면 근무 알람 먼저, 지난 한 번 알람은 자동으로 끄지 않고 그냥 안 울림, 기본 날짜는 시각이 지났으면 내일
+- 분기점 기록(M6-2): 화면 **홈 → 목록 → 편집 화면**(vs 홈에 바로 목록 / 아래 탭 메뉴), DB **version 2 + 마이그레이션**(vs 지우고 새로 만들기 / 별도 DB)
+- 제가 정한 것(M6-2): 새 알람 기본 시각 07:00, 날짜는 '2026-12-01' 글자 입력 + [오늘][내일] 버튼, 일반 알람 id는 DB 자동 번호, 목록은 시각순, 홈의 오늘·내일 목록은 8개까지
+- DB 바꿀 때: Entity 수정 → version 올리기 → Migration의 CREATE 문이 Entity와 정확히 같아야 함 (다르면 앱 시작 시 오류)

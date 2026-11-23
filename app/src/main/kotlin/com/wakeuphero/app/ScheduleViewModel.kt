@@ -7,8 +7,9 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.wakeuphero.app.alarm.AlarmScheduler
 import com.wakeuphero.app.data.ScheduleRepository
-import com.wakeuphero.core.AlarmInfo
-import com.wakeuphero.core.nextAlarmInfo
+import com.wakeuphero.core.GeneralAlarm
+import com.wakeuphero.core.UpcomingAlarm
+import com.wakeuphero.core.nextUpcomingAlarm
 import kotlinx.coroutines.flow.combine
 import java.time.LocalDateTime
 import com.wakeuphero.core.AlarmRule
@@ -33,20 +34,21 @@ import java.time.YearMonth
 // - 근무표·근무 유형·알람 규칙이 바뀔 때마다 다음 알람을 계산해서 onAlarmChange로 알려준다 (→ 휴대폰 알람 예약)
 class ScheduleViewModel(
     private val repository: ScheduleRepository,
-    private val onAlarmChange: (AlarmInfo?) -> Unit = {}
+    private val onAlarmChange: (UpcomingAlarm?) -> Unit = {}
 ) : ViewModel() {
 
     // stateIn: DB에서 흘러오는 Flow를 "지금 값"을 가진 StateFlow로 바꿔 화면에서 쓰기 쉽게
     val schedule: StateFlow<List<WorkDay>> = repository.schedule.asState(emptyList())
     val shiftTypes: StateFlow<List<ShiftType>> = repository.shiftTypes.asState(emptyList())
     val alarmRules: StateFlow<List<AlarmRule>> = repository.alarmRules.asState(emptyList())
+    val generalAlarms: StateFlow<List<GeneralAlarm>> = repository.generalAlarms.asState(emptyList())
 
     init {
         viewModelScope.launch { repository.seedDefaultsIfEmpty() }
-        // 셋 중 하나라도 바뀌면(combine) 다음 알람을 다시 계산해서 예약
+        // 넷 중 하나라도 바뀌면(combine) 다음 알람(근무·일반)을 다시 계산해서 예약
         viewModelScope.launch {
-            combine(repository.schedule, repository.shiftTypes, repository.alarmRules) { s, t, r ->
-                nextAlarmInfo(LocalDateTime.now(), s, t, r)
+            combine(repository.schedule, repository.shiftTypes, repository.alarmRules, repository.generalAlarms) { s, t, r, g ->
+                nextUpcomingAlarm(LocalDateTime.now(), s, t, r, g)
             }.collect { onAlarmChange(it) }
         }
     }
@@ -71,6 +73,12 @@ class ScheduleViewModel(
         if (result is DeleteShiftResult.Deleted) viewModelScope.launch { repository.deleteShiftType(id) }
         return result
     }
+
+    // 일반 알람 (검사는 화면에서 core의 validateGeneralAlarm으로 먼저 한다)
+    fun saveGeneralAlarm(alarm: GeneralAlarm) = viewModelScope.launch { repository.saveGeneralAlarm(alarm) }
+    fun setGeneralAlarmEnabled(id: Int, enabled: Boolean) =
+        viewModelScope.launch { repository.setGeneralAlarmEnabled(id, enabled) }
+    fun deleteGeneralAlarm(id: Int) = viewModelScope.launch { repository.deleteGeneralAlarm(id) }
 
     // 지금 근무표에 change를 적용한 결과를 저장 (바뀐 부분만 DB에 반영됨)
     private fun edit(change: (List<WorkDay>) -> List<WorkDay>) {

@@ -106,6 +106,14 @@ class GeneralAlarmTest {
     // ── 화면에 쓰는 도우미 ──
 
     @Test
+    fun `날짜 글은 2026-12-01 모양만 받는다`() {
+        assertEquals(dec1, parseDateText(" 2026-12-01 "))
+        assertNull(parseDateText("2026-12-32"))
+        assertNull(parseDateText("2026-02-30"))
+        assertNull(parseDateText("12/01"))
+    }
+
+    @Test
     fun `한 번 알람의 기본 날짜는 시각이 지났으면 내일 아니면 오늘`() {
         assertEquals(dec1, defaultOneTimeDate(at(1, 8), LocalTime.of(9, 0)))
         assertEquals(dec1.plusDays(1), defaultOneTimeDate(at(1, 9), LocalTime.of(9, 0)))
