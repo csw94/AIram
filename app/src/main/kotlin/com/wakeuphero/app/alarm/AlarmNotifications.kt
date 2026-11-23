@@ -6,32 +6,27 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.media.AudioAttributes
-import android.media.RingtoneManager
 
-// 알람 알림: 알람 소리로 "끌 때까지 반복" 울리고, 잠금 화면이면 알람 화면(AlarmActivity)을 바로 띄운다
+// 알람 알림: 잠금 화면이면 알람 화면(AlarmActivity)을 바로 띄운다
+// 소리·진동은 AlarmService가 직접 울리므로 이 알림 자체는 조용하다
 object AlarmNotifications {
-    private const val CHANNEL_ID = "alarm_v1" // 채널 설정(소리 등)을 바꾸면 이름도 바꿔야 새 설정이 적용됨
+    private const val CHANNEL_ID = "alarm_v2" // 채널 설정(소리 등)을 바꾸면 이름도 바꿔야 새 설정이 적용됨 (v1: 알림 소리로 울림 → 무음 모드에서 막혀 v2로)
+    private const val OLD_CHANNEL_ID = "alarm_v1"
     const val NOTIFICATION_ID = 1001
 
-    // 알림 채널: Android 8.0+ 에서 소리·진동은 채널 단위로 정해진다
+    // 알림 채널: 중요도 높음(전체 화면·상단 표시), 소리·진동은 끔 (서비스가 담당)
     fun ensureChannel(context: Context) {
+        val manager = context.getSystemService(NotificationManager::class.java)
+        manager.deleteNotificationChannel(OLD_CHANNEL_ID)
         val channel = NotificationChannel(CHANNEL_ID, "알람", NotificationManager.IMPORTANCE_HIGH).apply {
             description = "출근 알람"
-            setSound(
-                RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_ALARM) // "알람 볼륨"으로 울림
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
-            )
-            enableVibration(true)
-            vibrationPattern = longArrayOf(0, 800, 400, 800)
+            setSound(null, null)
+            enableVibration(false)
         }
-        context.getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        manager.createNotificationChannel(channel)
     }
 
-    fun show(context: Context, title: String, text: String) {
+    fun build(context: Context, title: String, text: String): Notification {
         ensureChannel(context)
 
         // 알람 화면을 여는 PendingIntent (잠금 화면: 바로 전체 화면 / 사용 중: 알림을 누르면 열림)
@@ -44,7 +39,7 @@ object AlarmNotifications {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = Notification.Builder(context, CHANNEL_ID)
+        return Notification.Builder(context, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
             .setContentTitle("⏰ $title")
             .setContentText(text)
@@ -55,9 +50,6 @@ object AlarmNotifications {
             .addAction(action(context, "끄기", AlarmReceiver.ACTION_DISMISS, title, text, 2))
             .addAction(action(context, "${AlarmActivity.SNOOZE_MINUTES}분 뒤", AlarmReceiver.ACTION_SNOOZE, title, text, 3))
             .build()
-            .apply { flags = flags or Notification.FLAG_INSISTENT } // 끌 때까지 소리 반복
-
-        context.getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification)
     }
 
     // 알림에 붙는 버튼: 누르면 AlarmReceiver가 끄기/다시 알림 처리

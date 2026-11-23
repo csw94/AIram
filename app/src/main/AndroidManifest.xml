@@ -14,6 +14,10 @@
     <!-- 재부팅 후 알람 다시 예약 -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- 알람 소리를 직접 울리는 포그라운드 서비스 (무음 모드에서도 알람 볼륨으로) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:name=".WakeUpHeroApp"
@@ -38,6 +42,12 @@
             android:showWhenLocked="true"
             android:taskAffinity=""
             android:turnScreenOn="true" />
+
+        <!-- 알람 소리·진동 담당 -->
+        <service
+            android:name=".alarm.AlarmService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
 
         <!-- 예약한 알람 시각에 깨어나는 리시버 (우리 앱만 보낼 수 있게 exported=false) -->
         <receiver

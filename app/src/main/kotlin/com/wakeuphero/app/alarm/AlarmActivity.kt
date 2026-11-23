@@ -58,7 +58,7 @@ class AlarmActivity : ComponentActivity() {
     }
 
     private fun dismiss() {
-        AlarmNotifications.cancel(this) // 소리 멈춤
+        AlarmService.stop(this) // 소리·진동 멈춤
         finish()
     }
 

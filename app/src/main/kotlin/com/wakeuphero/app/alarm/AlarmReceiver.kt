@@ -15,13 +15,13 @@ class AlarmReceiver : BroadcastReceiver() {
         val text = intent.getStringExtra(AlarmActivity.EXTRA_TEXT) ?: ""
         when (intent.action) {
             ACTION_FIRE -> {
-                AlarmNotifications.show(context, title, text)
+                AlarmService.start(context, title, text)
                 rescheduleAsync(context)
             }
-            ACTION_DISMISS -> AlarmNotifications.cancel(context)
+            ACTION_DISMISS -> AlarmService.stop(context)
             ACTION_SNOOZE -> {
                 AlarmScheduler.snooze(context, AlarmActivity.SNOOZE_MINUTES, title, text.removePrefix("다시 알림 · "))
-                AlarmNotifications.cancel(context)
+                AlarmService.stop(context)
             }
         }
     }
