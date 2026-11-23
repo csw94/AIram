@@ -3,6 +3,7 @@ package com.wakeuphero.app.alarm
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.wakeuphero.app.AppSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -18,7 +19,8 @@ class AlarmReceiver : BroadcastReceiver() {
                 AlarmService.start(context, title, text)
                 rescheduleAsync(context)
             }
-            ACTION_DISMISS -> AlarmService.stop(context)
+            // 미션 알람이면 예전 알림의 [끄기]가 눌려도 무시 (알람 화면에서 문제를 풀어야 꺼짐)
+            ACTION_DISMISS -> if (!AppSettings.isMathMission(context)) AlarmService.stop(context)
             ACTION_SNOOZE -> {
                 AlarmScheduler.snooze(context, AlarmActivity.SNOOZE_MINUTES, title, text.removePrefix("다시 알림 · "))
                 AlarmService.stop(context)

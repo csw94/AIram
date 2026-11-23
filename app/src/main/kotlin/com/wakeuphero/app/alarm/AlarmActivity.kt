@@ -4,17 +4,23 @@ import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
+import com.wakeuphero.app.AppSettings
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -23,7 +29,7 @@ import androidx.compose.ui.unit.sp
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-// 알람이 울릴 때 뜨는 화면: [5분 뒤 다시 알림] [끄기]
+// 알람이 울릴 때 뜨는 화면: [5분 뒤 다시 알림] [끄기] (미션 알람이면 [끄기] 대신 수학 문제)
 class AlarmActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,12 +38,14 @@ class AlarmActivity : ComponentActivity() {
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "알람"
         val text = intent.getStringExtra(EXTRA_TEXT) ?: ""
         val now = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
+        val mission = AppSettings.isMathMission(this)
 
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
+                    // imePadding + 스크롤: 키보드가 올라오면 그만큼 화면을 줄여 [확인] 버튼이 가려지지 않게
                     Column(
-                        modifier = Modifier.padding(32.dp),
+                        modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(32.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
                     ) {
@@ -45,11 +53,20 @@ class AlarmActivity : ComponentActivity() {
                         Text("⏰ $title", style = MaterialTheme.typography.headlineMedium)
                         Text(text, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                         Text("일어나세요 용사여!", style = MaterialTheme.typography.bodyLarge)
-                        OutlinedButton(onClick = { snooze(title, text) }, modifier = Modifier.fillMaxWidth()) {
-                            Text("${SNOOZE_MINUTES}분 뒤 다시 알림")
+                        val snoozeButton = @Composable {
+                            OutlinedButton(onClick = { snooze(title, text) }, modifier = Modifier.fillMaxWidth()) {
+                                Text("${SNOOZE_MINUTES}분 뒤 다시 알림")
+                            }
                         }
-                        Button(onClick = { dismiss() }, modifier = Modifier.fillMaxWidth()) {
-                            Text("끄기", fontSize = 20.sp)
+                        if (mission) {
+                            BackHandler {} // 미션 중에는 뒤로가기로 빠져나가지 못하게
+                            MathMissionSection(onDone = { dismiss() }) // 답 칸 바로 아래에 [확인]이 오도록 문제를 먼저
+                            snoozeButton()
+                        } else {
+                            snoozeButton()
+                            Button(onClick = { dismiss() }, modifier = Modifier.fillMaxWidth()) {
+                                Text("끄기", fontSize = 20.sp)
+                            }
                         }
                     }
                 }

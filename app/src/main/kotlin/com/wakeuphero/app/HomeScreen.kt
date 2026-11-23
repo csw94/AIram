@@ -2,12 +2,15 @@ package com.wakeuphero.app
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -34,6 +37,8 @@ fun HomeScreen(
     onOpenCalendar: () -> Unit,
     onOpenSettings: () -> Unit = {},
     onOpenGeneralAlarms: () -> Unit = {},
+    mathMission: Boolean = false,
+    onMathMissionChange: (Boolean) -> Unit = {},
     showAlarmStatus: Boolean = true // 미리보기(Preview)에서는 끄기
 ) {
     // 지금부터 내일 23:59까지 울릴 알람 (근무 + 일반, 시각순). 모레 00:00은 "내일"이 아니므로 제외
@@ -59,6 +64,13 @@ fun HomeScreen(
         Button(onClick = onOpenCalendar) { Text("근무표 달력") }
         OutlinedButton(onClick = onOpenSettings) { Text("근무 유형 설정") }
         OutlinedButton(onClick = onOpenGeneralAlarms) { Text("일반 알람") }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("미션 알람", style = MaterialTheme.typography.titleMedium)
+                Text("수학 문제 3개를 풀어야 알람이 꺼져요", style = MaterialTheme.typography.bodySmall)
+            }
+            Switch(checked = mathMission, onCheckedChange = onMathMissionChange)
+        }
         if (showAlarmStatus) AlarmPermissionSection()
     }
 }

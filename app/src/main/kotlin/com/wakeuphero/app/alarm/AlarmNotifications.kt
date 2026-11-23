@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import com.wakeuphero.app.AppSettings
 
 // 알람 알림: 잠금 화면이면 알람 화면(AlarmActivity)을 바로 띄운다
 // 소리·진동은 AlarmService가 직접 울리므로 이 알림 자체는 조용하다
@@ -47,7 +48,10 @@ object AlarmNotifications {
             .setFullScreenIntent(openAlarm, true)
             .setContentIntent(openAlarm)
             .setOngoing(true) // 밀어서 지울 수 없음 → 알람 화면에서 끄기
-            .addAction(action(context, "끄기", AlarmReceiver.ACTION_DISMISS, title, text, 2))
+            .apply {
+                // 미션 알람이면 [끄기] 버튼을 빼서 문제를 건너뛰지 못하게 (알림을 누르면 알람 화면에서 풀기)
+                if (!AppSettings.isMathMission(context)) addAction(action(context, "끄기", AlarmReceiver.ACTION_DISMISS, title, text, 2))
+            }
             .addAction(action(context, "${AlarmActivity.SNOOZE_MINUTES}분 뒤", AlarmReceiver.ACTION_SNOOZE, title, text, 3))
             .build()
     }

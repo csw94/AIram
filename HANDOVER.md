@@ -25,7 +25,8 @@
 | `fdb66d2` | **M6-1 일반 알람 core** — `GeneralAlarm.kt`(한 번/요일 반복, 켜기·끄기, 근무+일반 합친 `upcomingAlarms`·`nextUpcomingAlarm`, 검사, 요일 글), `AlarmInfo`의 근무 알람 목록을 `workAlarmInfos`로 분리 — core 테스트 99개 통과 |
 | `0a372a1` | **M6-2 일반 알람 앱** — DB version 2(general_alarms 표 + 마이그레이션 1→2), 일반 알람 목록(켜기·끄기)·편집(시각·이름·반복 요일·날짜·삭제) 화면, 홈에 오늘·내일 알람 목록, 예약을 `nextUpcomingAlarm`(근무+일반)으로 교체, core `parseDateText`(테스트 1개) — core 테스트 100개, 에뮬레이터에서 마이그레이션(근무표 유지)·추가·예약·울림·다음 예약·알림 [끄기]·"지남" 표시 확인 |
 | `34f2a01` | **M6 코드 검토 반영** — 지난 시각 한 번 알람 저장 막기, 지난 한 번 알람을 다시 켜면 다음 날짜로 옮김(`enableGeneralAlarm`), 홈 "내일" 목록 경계(모레 00:00 제외), 편집 화면 입력값이 늦게 불러온 알람으로 다시 맞춰지게, 시스템 리시버 action 확인(lint), 다음 알람 없음 문구 — core 테스트 103개, lint 오류 0 |
-| (이 커밋) | **실기기 테스트(일반 알람) 22개 통과 + 입력 편의** — 시각·날짜 칸에 숫자만 쳐도 ":"·"-" 자동 입력(core `InputFormat.kt`, 테스트 5개, app `FormattedField`), 일반 알람·근무 유형 화면 모두 적용 — core 테스트 108개 |
+| `087e292` | **실기기 테스트(일반 알람) 22개 통과 + 입력 편의** — 시각·날짜 칸에 숫자만 쳐도 ":"·"-" 자동 입력(core `InputFormat.kt`, 테스트 5개, app `FormattedField`), 일반 알람·근무 유형 화면 모두 적용 — core 테스트 108개 |
+| (이 커밋) | **A1 미션 알람** — core `MathMission.kt`(덧셈·곱셈 번갈아 3문제, 정답 확인, 테스트 7개), app `AppSettings`(SharedPreferences), 홈의 미션 스위치, 알람 화면의 `MathMissionSection`, 미션 중 알림 [끄기] 제거·뒤로가기 막기, 알람 화면 키보드 대응(imePadding+스크롤) — core 테스트 115개, 에뮬레이터에서 문제 풀이로 끄기 확인 |
 
 - 콘솔 입출력 설계: 파일 입력 + 달력형 출력
 - 기획서에 **S8 근무표 사진으로 입력** 추가 (Android 단계에서 설계안 비교 후 진행)
@@ -84,7 +85,7 @@ AIram/
 
 ## 3. 현재 진행 상태 및 남은 작업
 
-**현재 위치: M6-2 휴대폰 테스트 통과(22개) + 입력 자동 기호 완료 → 남은 것: M6 추가 기능(A1~A5 중 선택)·회고**
+**현재 위치: A1 미션 알람 완료(휴대폰 확인 대기) → 남은 것: A2·A4·A5 중 선택, 회고**
 
 ### 1단계: 콘솔 ✅ 전부 완료
 - 콘솔 입출력, 패턴 자동 채우기, 이번만 끄기, 근무 유형 삭제 막기
@@ -131,7 +132,9 @@ AIram/
 | `app/.../alarm/AlarmReceiver.kt` | 알람 시각 → 알림 띄우고 다음 알람 예약 / 알림 버튼 [끄기][5분 뒤] / `SystemEventReceiver`: 재부팅·시간 변경·앱 업데이트·권한 변경 시 재예약 |
 | `app/.../alarm/AlarmNotifications.kt` | 알람 알림(조용한 채널 alarm_v2, 옛 alarm_v1 삭제), 전체 화면 인텐트, 버튼 2개 — `build()`로 알림만 만들어 서비스에 넘김 |
 | `app/.../alarm/AlarmService.kt` | 포그라운드 서비스(mediaPlayback): MediaPlayer(USAGE_ALARM, 반복) + 진동(USAGE_ALARM) + 웨이크락(최대 10분). `start()`/`stop()` |
-| `app/.../alarm/AlarmActivity.kt` | 알람 울림 화면 (잠금 화면 위·화면 켜기, 끄기·5분 뒤) |
+| `app/.../alarm/AlarmActivity.kt` | 알람 울림 화면 (잠금 화면 위·화면 켜기, 끄기·5분 뒤, 미션이면 [끄기] 대신 수학 문제 + 뒤로가기 막기, 키보드 대응) |
+| `app/.../alarm/MathMissionSection.kt` | 미션 문제 풀이 UI (씨앗·푼 개수 rememberSaveable, 키패드 [완료]로도 제출) |
+| `app/.../AppSettings.kt` | SharedPreferences 설정 (math_mission) |
 | `app/.../data/Entities.kt` | DB 표 4개(shift_types, alarm_rules, work_days, general_alarms — 요일은 "1,3,5" 글자) + core ↔ DB 변환 (날짜·시각은 글자로 저장) |
 | `app/.../data/AppDao.kt` | 조회는 Flow(자동 갱신), `applyScheduleChanges()`는 @Transaction으로 넣기·지우기 한 묶음 |
 | `app/.../data/AppDatabase.kt` | Room DB (파일명 wakeuphero.db, **version 2**, `MIGRATION_1_2` = general_alarms 표 추가) |
@@ -178,3 +181,6 @@ AIram/
 - DB 바꿀 때: Entity 수정 → version 올리기 → Migration의 CREATE 문이 Entity와 정확히 같아야 함 (다르면 앱 시작 시 오류)
 - 제가 정한 것(M6 검토): 지난 시각의 한 번 알람은 저장 불가(경고), 지난 한 번 알람을 스위치로 켜면 오늘/내일의 그 시각으로 옮김, 같은 시각 근무·일반 알람은 한 번만 울림(제목은 근무 알람)
 - 분기점 기록(입력 편의): **치는 대로 기호 자동 삽입**(vs 읽을 때만 너그럽게 해석 / 시계·달력 선택기) — 숫자 키패드, 커서는 항상 맨 끝(중간 수정 대신 지우고 다시 입력)
+- 분기점 기록(A1): 미션 단위 **앱 전체 스위치 하나**(vs 근무 유형·일반 알람마다 / 항상 켜짐), 설정 저장 **SharedPreferences**(vs DataStore / Room v3)
+- 제가 정한 것(A1): 3문제(두 자리 덧셈 10~89, 곱셈 2~9, 번갈아), 틀리면 같은 문제 유지, 미션 중에도 [5분 뒤]는 허용, 미션이면 알림의 [끄기] 버튼 없음(예전 알림 버튼도 무시), 미션 중 뒤로가기 막음, 문제 푸는 동안에도 소리는 계속
+- 알람 화면 주의: targetSdk 37은 화면 끝까지 그리기(edge-to-edge)라 키보드가 와도 화면이 저절로 안 줄어듦 → imePadding 필요

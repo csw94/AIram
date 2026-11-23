@@ -12,9 +12,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.time.LocalDateTime
 
@@ -44,6 +46,8 @@ fun App(vm: ScheduleViewModel = viewModel(factory = ScheduleViewModel.Factory)) 
     val shiftTypes by vm.shiftTypes.collectAsState()
     val alarmRules by vm.alarmRules.collectAsState()
     val generalAlarms by vm.generalAlarms.collectAsState()
+    val context = LocalContext.current
+    var mathMission by remember { mutableStateOf(AppSettings.isMathMission(context)) }
 
     when (screen) {
         Screen.HOME -> HomeScreen(
@@ -54,7 +58,9 @@ fun App(vm: ScheduleViewModel = viewModel(factory = ScheduleViewModel.Factory)) 
             now = LocalDateTime.now(),
             onOpenCalendar = { screen = Screen.CALENDAR },
             onOpenSettings = { screen = Screen.SHIFT_LIST },
-            onOpenGeneralAlarms = { screen = Screen.GENERAL_LIST }
+            onOpenGeneralAlarms = { screen = Screen.GENERAL_LIST },
+            mathMission = mathMission,
+            onMathMissionChange = { mathMission = it; AppSettings.setMathMission(context, it) }
         )
 
         Screen.CALENDAR -> {
