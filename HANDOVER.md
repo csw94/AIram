@@ -21,7 +21,8 @@
 | `17366eb` | **M3 Room 저장** — core `scheduleDiff()`(테스트 5개), app `data/`(Entity·DAO·DB·Repository), ViewModel이 저장소 사용 — core 테스트 69개 통과, 에뮬레이터에서 재시작 후 유지 확인 |
 | `b39b5f4` | **M4 근무 유형 설정 화면** — core `ShiftTypeEdit.kt`(검사·새 id·시간 읽기·알람 미리보기, 테스트 12개), app 목록·편집 화면, 저장·삭제(사용 중이면 막기) — core 테스트 81개 통과, 에뮬레이터 확인 |
 | `e76caf7` | **M5 실제 알람** — core `AlarmInfo.kt`(몇 번째 알람인지·알람 글, 테스트 5개), app `alarm/`(예약·리시버·알림·알람 화면), 권한 안내, 디버그 테스트 버튼 — core 테스트 86개 통과, 에뮬레이터에서 울림·끄기·다시 알림·재부팅 재예약 확인 |
-| (이 커밋) | **실기기 테스트 1차 반영** — 무음·방해 금지·절전 모드에서 안 울림 → 소리·진동을 `AlarmService`(포그라운드 서비스)가 알람 볼륨으로 직접 재생, 알림 채널은 조용한 `alarm_v2` — 에뮬레이터 무음 모드에서 재생 확인 |
+| `948b4bd` | **실기기 테스트 1차 반영** — 무음·방해 금지·절전 모드에서 안 울림 → 소리·진동을 `AlarmService`(포그라운드 서비스)가 알람 볼륨으로 직접 재생, 알림 채널은 조용한 `alarm_v2` — 에뮬레이터 무음 모드에서 재생 확인 |
+| (이 커밋) | **M6-1 일반 알람 core** — `GeneralAlarm.kt`(한 번/요일 반복, 켜기·끄기, 근무+일반 합친 `upcomingAlarms`·`nextUpcomingAlarm`, 검사, 요일 글), `AlarmInfo`의 근무 알람 목록을 `workAlarmInfos`로 분리 — core 테스트 99개 통과 |
 
 - 콘솔 입출력 설계: 파일 입력 + 달력형 출력
 - 기획서에 **S8 근무표 사진으로 입력** 추가 (Android 단계에서 설계안 비교 후 진행)
@@ -80,7 +81,7 @@ AIram/
 
 ## 3. 현재 진행 상태 및 남은 작업
 
-**현재 위치: 실기기 테스트 통과(2차: 무음·방해 금지·절전 포함 전부 정상) → 다음은 M6**
+**현재 위치: M6-1(일반 알람 core 계산) 완료 → 다음은 M6-2(app: DB 저장·목록·편집 화면·예약 연결)**
 
 ### 1단계: 콘솔 ✅ 전부 완료
 - 콘솔 입출력, 패턴 자동 채우기, 이번만 끄기, 근무 유형 삭제 막기
@@ -92,7 +93,10 @@ AIram/
 - [x] **M4** 근무 유형 설정 화면 (목록, 추가·고치기, 휴무 스위치, 출근 시간 "07:00" 입력, 알람 규칙 3칸 + 미리보기, 색 7가지, 검사 메시지, 사용 중이면 삭제 막고 날짜 안내)
 - [x] **M5** AlarmManager(setAlarmClock)로 다음 알람 1개 예약, 알람 알림(끌 때까지 반복·전체 화면) + 알람 화면, 알림의 [끄기][5분 뒤], 권한 안내(알림·정확한 알람·전체 화면), 재부팅·시간 변경 시 재예약
 - [x] **실기기 테스트** (사용자 삼성 휴대폰) — 1차 4·5·6 실패 → 소리 재생을 포그라운드 서비스로 바꿔 2차 전부 정상
-- [ ] **M6** 일반 알람(F1~F6), 추가 기능, 실기기 테스트, 회고
+- [ ] **M6** 일반 알람(F1~F6)
+  - [x] M6-1 core: GeneralAlarm 모델·울릴 시각·근무와 합친 다가오는 알람·검사 (테스트 13개)
+  - [ ] M6-2 app: Room에 general_alarms 표(DB version 2 + 마이그레이션), 알람 목록(F2·F3·F4)·편집 화면(F1·F6), 예약을 nextUpcomingAlarm으로 교체
+  - [ ] 추가 기능·회고
 - [ ] (추가) S8 근무표 사진 입력 — 설계안 비교 후
 
 ### 미정 사항
@@ -111,8 +115,8 @@ AIram/
 | `build.gradle.kts` | 루트: 플러그인 버전만 (`apply false`) |
 | `core/build.gradle.kts` | core 빌드 (kotlin jvm + application, 실행 폴더 = 루트) |
 | `app/build.gradle.kts` | app 빌드 (AGP, Compose, `implementation(project(":core"))`) |
-| `core/src/main/kotlin/com/wakeuphero/core/` | `AlarmInfo`(nextAlarmInfo·alarmTitle·alarmText, nextAlarm은 이걸 재사용) `ShiftTypeEdit`(validateShiftType·nextShiftTypeId·parseTimeText·alarmPreview) `ScheduleDiff` `ScheduleEdit`(setShift·removeShift·toggleSkip·applyPattern·parsePatternCodes·monthGrid) `Models` `AlarmCalculator` `DefaultShifts` `ScheduleParser` `PatternFill` `SkipAlarm` `DeleteShiftType` `ConsoleFormat` `Main`(콘솔) |
-| `core/src/test/kotlin/com/wakeuphero/core/` | 테스트 86개 (알람 계산 18, 파일 읽기 7, 출력 4, 환경 1, 패턴 9, 이번만 끄기 9, 유형 삭제 6, 근무표 편집 10, 저장 차이 5, 근무 유형 편집 12, 알람 정보 5) |
+| `core/src/main/kotlin/com/wakeuphero/core/` | `GeneralAlarm`(GeneralAlarm·generalAlarmTimes·UpcomingAlarm·upcomingAlarms·nextUpcomingAlarm·validateGeneralAlarm·defaultOneTimeDate·repeatDaysText) `AlarmInfo`(nextAlarmInfo·alarmTitle·alarmText, nextAlarm은 이걸 재사용) `ShiftTypeEdit`(validateShiftType·nextShiftTypeId·parseTimeText·alarmPreview) `ScheduleDiff` `ScheduleEdit`(setShift·removeShift·toggleSkip·applyPattern·parsePatternCodes·monthGrid) `Models` `AlarmCalculator` `DefaultShifts` `ScheduleParser` `PatternFill` `SkipAlarm` `DeleteShiftType` `ConsoleFormat` `Main`(콘솔) |
+| `core/src/test/kotlin/com/wakeuphero/core/` | 테스트 99개 (알람 계산 18, 파일 읽기 7, 출력 4, 환경 1, 패턴 9, 이번만 끄기 9, 유형 삭제 6, 근무표 편집 10, 저장 차이 5, 근무 유형 편집 12, 알람 정보 5, 일반 알람 13) |
 | `app/src/main/kotlin/com/wakeuphero/app/MainActivity.kt` | `App()`: 화면 전환(enum Screen: HOME, CALENDAR, SHIFT_LIST, SHIFT_EDIT), 뒤로가기 |
 | `app/.../ScheduleViewModel.kt` | 저장소의 Flow → StateFlow, 편집 = core 함수로 새 근무표 계산 → 저장소에 저장 → DB 갱신으로 화면 자동 반영. `Factory`로 저장소 주입 |
 | `app/.../HomeScreen.kt` | 오늘·내일 근무, 다음 알람, [근무표 달력] 버튼 |
@@ -163,3 +167,5 @@ AIram/
 - 알림 채널 소리·진동을 바꾸려면 CHANNEL_ID를 바꿔야 함 (한 번 만든 채널 설정은 앱이 못 바꿈)
 - 분기점 기록(실기기 1차): 알람 소리 **포그라운드 서비스가 직접 재생**(vs 알람 화면에서만 재생 / 채널 방해 금지 무시 권한) — 알림 소리는 무음·방해 금지·절전에서 시스템이 막음. M5의 '알림 채널 소리' 방식을 대체
 - 제가 정한 것: 웨이크락 최대 10분(소리는 끌 때까지 계속), 알람음 없으면 벨소리→알림음 순으로 대체
+- 분기점 기록(M6-1): 근무·일반 알람 합치기 **core의 upcomingAlarms 하나로 함께 정렬**(vs 따로 계산해 앱에서 비교 / 일반 알람을 가짜 근무로 변환) — F2 목록과 예약이 같은 함수를 씀
+- 제가 정한 것(M6-1): 반복 요일이 없으면 '한 번만'(날짜 필요), 이름은 비워도 됨(→ '알람')·20글자까지, 같은 시각이면 근무 알람 먼저, 지난 한 번 알람은 자동으로 끄지 않고 그냥 안 울림, 기본 날짜는 시각이 지났으면 내일

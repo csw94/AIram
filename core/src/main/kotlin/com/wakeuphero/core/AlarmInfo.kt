@@ -22,8 +22,18 @@ fun nextAlarmInfo(
     rules: List<AlarmRule>
 ): AlarmInfo? {
     val limit = now.plusMonths(1)
+    return workAlarmInfos(schedule, shiftTypes, rules)
+        .filter { it.time > now && it.time <= limit } // 방금 울린 알람(now와 같음)은 제외
+        .minByOrNull { it.time }
+}
 
-    return schedule
+// 근무표 전체의 근무 알람 (기간 제한 없음) — 근무 유형이나 알람 규칙을 못 찾으면 그날은 알람 없음
+internal fun workAlarmInfos(
+    schedule: List<WorkDay>,
+    shiftTypes: List<ShiftType>,
+    rules: List<AlarmRule>
+): List<AlarmInfo> =
+    schedule
         .flatMap { workDay ->
             val shiftType = shiftTypes.find { it.id == workDay.shiftTypeId } ?: return@flatMap emptyList()
             val rule = rules.find { it.shiftTypeId == workDay.shiftTypeId } ?: return@flatMap emptyList()
@@ -31,9 +41,6 @@ fun nextAlarmInfo(
             // 시각마다 "몇 번째인지"를 함께 묶어 둔다
             times.mapIndexed { index, time -> AlarmInfo(time, workDay, shiftType, index + 1, times.size) }
         }
-        .filter { it.time > now && it.time <= limit } // 방금 울린 알람(now와 같음)은 제외
-        .minByOrNull { it.time }
-}
 
 private val workStartFormat = DateTimeFormatter.ofPattern("MM/dd(E) HH:mm", Locale.KOREAN)
 
