@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 다크 모드일 때: 어두운 창 배경 (앱을 열 때 흰 화면이 번쩍이지 않게) -->
+    <style name="Theme.WakeUpHero" parent="android:Theme.Material.NoActionBar" />
+</resources>

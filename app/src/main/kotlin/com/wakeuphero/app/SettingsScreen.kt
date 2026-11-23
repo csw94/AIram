@@ -165,7 +165,7 @@ fun ShiftTypeEditScreen(
                     modifier = Modifier
                         .size(36.dp)
                         .background(hexToColor(c), CircleShape)
-                        .border(if (c == color) 3.dp else 0.dp, Color.Black, CircleShape)
+                        .border(if (c == color) 3.dp else 0.dp, MaterialTheme.colorScheme.onSurface, CircleShape) // 고른 색 테두리 (다크 모드면 흰색)
                         .clickable { color = c }
                 )
             }

@@ -2,6 +2,7 @@ package com.wakeuphero.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,8 +27,9 @@ enum class Screen { HOME, CALENDAR, SHIFT_LIST, SHIFT_EDIT, GENERAL_LIST, GENERA
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge() // 위쪽 상태 표시줄 아이콘 색을 밝은/다크 모드에 맞춰 자동으로
         setContent {
-            MaterialTheme {
+            WakeUpHeroTheme {
                 Surface(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
                     App()
                 }

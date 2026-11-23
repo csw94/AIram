@@ -93,7 +93,7 @@ private fun describeDay(schedule: List<WorkDay>, shiftTypes: List<ShiftType>, da
 @Composable
 private fun HomeScreenPreview() {
     val start = LocalDate.of(2026, 12, 1)
-    MaterialTheme {
+    WakeUpHeroTheme {
         HomeScreen(
             schedule = fillPattern(start, start.plusDays(30), listOf(1, 1, 2, 2, 3, 3, 4, 4)),
             shiftTypes = defaultShiftTypes,

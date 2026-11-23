@@ -27,7 +27,8 @@
 | `34f2a01` | **M6 코드 검토 반영** — 지난 시각 한 번 알람 저장 막기, 지난 한 번 알람을 다시 켜면 다음 날짜로 옮김(`enableGeneralAlarm`), 홈 "내일" 목록 경계(모레 00:00 제외), 편집 화면 입력값이 늦게 불러온 알람으로 다시 맞춰지게, 시스템 리시버 action 확인(lint), 다음 알람 없음 문구 — core 테스트 103개, lint 오류 0 |
 | `087e292` | **실기기 테스트(일반 알람) 22개 통과 + 입력 편의** — 시각·날짜 칸에 숫자만 쳐도 ":"·"-" 자동 입력(core `InputFormat.kt`, 테스트 5개, app `FormattedField`), 일반 알람·근무 유형 화면 모두 적용 — core 테스트 108개 |
 | `89cca36` | **A1 미션 알람** — core `MathMission.kt`(덧셈·곱셈 번갈아 3문제, 정답 확인, 테스트 7개), app `AppSettings`(SharedPreferences), 홈의 미션 스위치, 알람 화면의 `MathMissionSection`, 미션 중 알림 [끄기] 제거·뒤로가기 막기, 알람 화면 키보드 대응(imePadding+스크롤) — core 테스트 115개, 에뮬레이터에서 문제 풀이로 끄기 확인 |
-| (이 커밋) | **A1 휴대폰 테스트 9개 통과** (스위치 유지·[끄기] 없음·뒤로가기 막힘·키보드 대응·오답 안내·정답 3개로 끄기·다시 알림 후 미션·미션 끄면 기존 동작) |
+| `677e045` | **A1 휴대폰 테스트 9개 통과** (스위치 유지·[끄기] 없음·뒤로가기 막힘·키보드 대응·오답 안내·정답 3개로 끄기·다시 알림 후 미션·미션 끄면 기존 동작) |
+| (이 커밋) | **A5 다크 모드** — 휴대폰 설정을 따라감: `Theme.kt`(WakeUpHeroTheme, 밝은/어두운 색), 창 테마 `values(-night)/themes.xml`(여는 순간 흰 화면 번쩍임 방지), `enableEdgeToEdge`(상단 아이콘 색 자동), 직접 쓴 색(달력 빈 칸·색 고르기 테두리)을 테마 색으로 — 에뮬레이터 다크/밝은 모드 화면 캡처로 확인 |
 
 - 콘솔 입출력 설계: 파일 입력 + 달력형 출력
 - 기획서에 **S8 근무표 사진으로 입력** 추가 (Android 단계에서 설계안 비교 후 진행)
@@ -86,7 +87,7 @@ AIram/
 
 ## 3. 현재 진행 상태 및 남은 작업
 
-**현재 위치: A1 미션 알람 휴대폰 테스트 통과 → 남은 것: A2(다시 알림 시간 고르기)·A4(근무 유형별 알람음)·A5(다크 모드) 중 선택, 회고**
+**현재 위치: A5 다크 모드 완료(휴대폰 확인 대기) → 남은 것: A2(다시 알림 시간)·A4(근무 유형별 알람음) 선택, 회고**
 
 ### 1단계: 콘솔 ✅ 전부 완료
 - 콘솔 입출력, 패턴 자동 채우기, 이번만 끄기, 근무 유형 삭제 막기
@@ -136,6 +137,7 @@ AIram/
 | `app/.../alarm/AlarmActivity.kt` | 알람 울림 화면 (잠금 화면 위·화면 켜기, 끄기·5분 뒤, 미션이면 [끄기] 대신 수학 문제 + 뒤로가기 막기, 키보드 대응) |
 | `app/.../alarm/MathMissionSection.kt` | 미션 문제 풀이 UI (씨앗·푼 개수 rememberSaveable, 키패드 [완료]로도 제출) |
 | `app/.../AppSettings.kt` | SharedPreferences 설정 (math_mission) |
+| `app/.../Theme.kt` | `WakeUpHeroTheme`: 모든 화면을 감싸는 테마 (새 화면도 색은 MaterialTheme.colorScheme에서) |
 | `app/.../data/Entities.kt` | DB 표 4개(shift_types, alarm_rules, work_days, general_alarms — 요일은 "1,3,5" 글자) + core ↔ DB 변환 (날짜·시각은 글자로 저장) |
 | `app/.../data/AppDao.kt` | 조회는 Flow(자동 갱신), `applyScheduleChanges()`는 @Transaction으로 넣기·지우기 한 묶음 |
 | `app/.../data/AppDatabase.kt` | Room DB (파일명 wakeuphero.db, **version 2**, `MIGRATION_1_2` = general_alarms 표 추가) |
@@ -185,3 +187,5 @@ AIram/
 - 분기점 기록(A1): 미션 단위 **앱 전체 스위치 하나**(vs 근무 유형·일반 알람마다 / 항상 켜짐), 설정 저장 **SharedPreferences**(vs DataStore / Room v3)
 - 제가 정한 것(A1): 3문제(두 자리 덧셈 10~89, 곱셈 2~9, 번갈아), 틀리면 같은 문제 유지, 미션 중에도 [5분 뒤]는 허용, 미션이면 알림의 [끄기] 버튼 없음(예전 알림 버튼도 무시), 미션 중 뒤로가기 막음, 문제 푸는 동안에도 소리는 계속
 - 알람 화면 주의: targetSdk 37은 화면 끝까지 그리기(edge-to-edge)라 키보드가 와도 화면이 저절로 안 줄어듦 → imePadding 필요
+- 분기점 기록(A5): **휴대폰 다크 모드 설정 따라가기**(vs 앱 안에서 자동/밝게/어둡게 고르기 / 배경화면 색 따라가는 Material You) — 근무 색이 기종마다 달라지지 않게
+- 다크 모드 주의: 색을 직접 쓰지 말 것(Color.Black 등). 근무 색 배경은 투명도 0.45라 어두운 바탕에서도 구분됨

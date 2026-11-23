@@ -4,14 +4,17 @@ import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.BackHandler
 import com.wakeuphero.app.AppSettings
+import com.wakeuphero.app.WakeUpHeroTheme
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
@@ -33,6 +36,7 @@ import java.time.format.DateTimeFormatter
 class AlarmActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge() // 위쪽 상태 표시줄 아이콘 색을 밝은/다크 모드에 맞춰 자동으로
         showOverLockScreen()
 
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "알람"
@@ -41,11 +45,11 @@ class AlarmActivity : ComponentActivity() {
         val mission = AppSettings.isMathMission(this)
 
         setContent {
-            MaterialTheme {
+            WakeUpHeroTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     // imePadding + 스크롤: 키보드가 올라오면 그만큼 화면을 줄여 [확인] 버튼이 가려지지 않게
                     Column(
-                        modifier = Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(32.dp),
+                        modifier = Modifier.fillMaxSize().systemBarsPadding().imePadding().verticalScroll(rememberScrollState()).padding(32.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
                     ) {
