@@ -49,5 +49,5 @@ private val alarmFormatter = DateTimeFormatter.ofPattern("MM/dd(E) HH:mm", Local
 
 // 다음 알람 안내 문장 (예: "다음 알람: 12/01(화) 05:30")
 fun nextAlarmMessage(alarm: LocalDateTime?): String =
-    if (alarm == null) "다음 알람: 없음 (한 달 안에 알람이 울릴 근무가 없어요)"
+    if (alarm == null) "다음 알람: 없음 (한 달 안에 울릴 알람이 없어요)"
     else "다음 알람: ${alarm.format(alarmFormatter)}"

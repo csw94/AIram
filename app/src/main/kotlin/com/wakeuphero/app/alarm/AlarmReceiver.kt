@@ -37,7 +37,19 @@ class AlarmReceiver : BroadcastReceiver() {
 // (재부팅하면 AlarmManager 예약이 모두 사라지기 때문)
 class SystemEventReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
+        // 매니페스트에 적은 시스템 알림만 처리 (다른 앱이 보낸 엉뚱한 인텐트는 무시)
+        if (intent.action !in HANDLED_ACTIONS) return
         rescheduleAsync(context)
+    }
+
+    private companion object {
+        val HANDLED_ACTIONS = setOf(
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_TIME_CHANGED,
+            Intent.ACTION_TIMEZONE_CHANGED,
+            Intent.ACTION_MY_PACKAGE_REPLACED,
+            "android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED"
+        )
     }
 }
 

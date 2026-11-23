@@ -90,10 +90,11 @@ fun GeneralAlarmEditScreen(
     onClose: () -> Unit
 ) {
     val defaultTime = LocalTime.of(7, 0)
-    var timeText by remember { mutableStateOf((original?.time ?: defaultTime).toString()) }
-    var label by remember { mutableStateOf(original?.label ?: "") }
-    var days by remember { mutableStateOf(original?.days ?: emptySet()) }
-    var dateText by remember {
+    // remember(original): 알람 목록이 늦게 불러와져 original이 나중에 채워져도 입력 칸을 그 값으로 다시 맞춘다
+    var timeText by remember(original) { mutableStateOf((original?.time ?: defaultTime).toString()) }
+    var label by remember(original) { mutableStateOf(original?.label ?: "") }
+    var days by remember(original) { mutableStateOf(original?.days ?: emptySet()) }
+    var dateText by remember(original) {
         mutableStateOf((original?.date ?: defaultOneTimeDate(now, original?.time ?: defaultTime)).toString())
     }
 
@@ -104,7 +105,7 @@ fun GeneralAlarmEditScreen(
     val problems = buildList {
         if (time == null) add("시각은 07:00 처럼 입력해 주세요")
         if (days.isEmpty() && date == null) add("날짜는 2026-12-01 처럼 입력해 주세요")
-        else validateGeneralAlarm(alarm)?.let(::add)
+        else validateGeneralAlarm(alarm, now)?.let(::add)
     }
 
     Column(

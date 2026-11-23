@@ -94,13 +94,37 @@ class GeneralAlarmTest {
 
     @Test
     fun `날짜도 반복 요일도 없으면 오류`() {
-        assertEquals("날짜나 반복 요일을 골라 주세요", validateGeneralAlarm(GeneralAlarm(1, "", LocalTime.of(9, 0))))
+        assertEquals("날짜나 반복 요일을 골라 주세요", validateGeneralAlarm(GeneralAlarm(1, "", LocalTime.of(9, 0)), at(1, 0)))
     }
 
     @Test
     fun `이름이 20글자를 넘으면 오류이고 빈 이름은 괜찮다`() {
-        assertEquals("이름은 20글자까지 쓸 수 있어요", validateGeneralAlarm(GeneralAlarm(1, "가".repeat(21), LocalTime.of(9, 0), date = dec1)))
-        assertNull(validateGeneralAlarm(GeneralAlarm(1, "", LocalTime.of(9, 0), date = dec1)))
+        assertEquals("이름은 20글자까지 쓸 수 있어요", validateGeneralAlarm(GeneralAlarm(1, "가".repeat(21), LocalTime.of(9, 0), date = dec1), at(1, 0)))
+        assertNull(validateGeneralAlarm(GeneralAlarm(1, "", LocalTime.of(9, 0), date = dec1), at(1, 0)))
+    }
+
+    @Test
+    fun `한 번 알람이 이미 지난 시각이면 오류이고 반복 알람은 괜찮다`() {
+        val passed = GeneralAlarm(1, "", LocalTime.of(9, 0), date = dec1)
+        assertEquals("이미 지난 시각이에요. 날짜나 시각을 바꿔 주세요", validateGeneralAlarm(passed, at(1, 9)))
+        assertNull(validateGeneralAlarm(passed, at(1, 8, 59)))
+        assertNull(validateGeneralAlarm(weekly(1, LocalTime.of(9, 0), TUESDAY), at(1, 10)))
+    }
+
+    // ── 켜기 ──
+
+    @Test
+    fun `지난 한 번 알람을 다시 켜면 다음에 올 그 시각으로 날짜가 옮겨진다`() {
+        val passed = oneTime(1, dec1, LocalTime.of(9, 0), enabled = false)
+        assertEquals(passed.copy(enabled = true, date = dec1.plusDays(1)), enableGeneralAlarm(passed, at(1, 10)))
+    }
+
+    @Test
+    fun `안 지난 한 번 알람과 반복 알람은 켜기만 한다`() {
+        val future = oneTime(1, dec1.plusDays(3), LocalTime.of(9, 0), enabled = false)
+        assertEquals(future.copy(enabled = true), enableGeneralAlarm(future, at(1, 10)))
+        val repeat = weekly(2, LocalTime.of(9, 0), MONDAY).copy(enabled = false)
+        assertEquals(repeat.copy(enabled = true), enableGeneralAlarm(repeat, at(1, 10)))
     }
 
     // ── 화면에 쓰는 도우미 ──

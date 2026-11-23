@@ -88,10 +88,21 @@ fun nextUpcomingAlarm(
 ): UpcomingAlarm? = upcomingAlarms(now, now.plusMonths(1), schedule, shiftTypes, rules, generalAlarms).firstOrNull()
 
 // 저장 전 검사 (문제 없으면 null)
-fun validateGeneralAlarm(alarm: GeneralAlarm): String? = when {
+// 한 번 알람이 이미 지난 시각이면 저장해도 울리지 않으므로 막는다
+fun validateGeneralAlarm(alarm: GeneralAlarm, now: LocalDateTime): String? = when {
     alarm.label.length > 20 -> "이름은 20글자까지 쓸 수 있어요"
     !alarm.isRepeating && alarm.date == null -> "날짜나 반복 요일을 골라 주세요"
+    !alarm.isRepeating && alarm.date!!.atTime(alarm.time) <= now -> "이미 지난 시각이에요. 날짜나 시각을 바꿔 주세요"
     else -> null
+}
+
+// 목록에서 스위치로 켤 때: 이미 지난 한 번 알람이면 다음에 올 그 시각(오늘 또는 내일)으로 날짜를 옮긴다
+// (안 그러면 켜져 있어도 영영 울리지 않음)
+fun enableGeneralAlarm(alarm: GeneralAlarm, now: LocalDateTime): GeneralAlarm {
+    val date = alarm.date
+    val passed = !alarm.isRepeating && date != null && date.atTime(alarm.time) <= now
+    return if (passed) alarm.copy(enabled = true, date = defaultOneTimeDate(now, alarm.time))
+    else alarm.copy(enabled = true)
 }
 
 // "한 번만" 알람의 기본 날짜: 오늘 그 시각이 아직 안 지났으면 오늘, 지났으면 내일

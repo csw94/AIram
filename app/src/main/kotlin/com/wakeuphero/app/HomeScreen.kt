@@ -36,8 +36,8 @@ fun HomeScreen(
     onOpenGeneralAlarms: () -> Unit = {},
     showAlarmStatus: Boolean = true // 미리보기(Preview)에서는 끄기
 ) {
-    // 지금부터 내일 밤 12시까지 울릴 알람 (근무 + 일반, 시각순)
-    val soon = upcomingAlarms(now, now.toLocalDate().plusDays(2).atStartOfDay(), schedule, shiftTypes, alarmRules, generalAlarms)
+    // 지금부터 내일 23:59까지 울릴 알람 (근무 + 일반, 시각순). 모레 00:00은 "내일"이 아니므로 제외
+    val soon = upcomingAlarms(now, now.toLocalDate().plusDays(1).atTime(23, 59, 59), schedule, shiftTypes, alarmRules, generalAlarms)
     val next = upcomingAlarms(now, now.plusMonths(1), schedule, shiftTypes, alarmRules, generalAlarms).firstOrNull()?.time
 
     Column(

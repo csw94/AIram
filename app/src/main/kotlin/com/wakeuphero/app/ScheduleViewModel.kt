@@ -8,6 +8,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.wakeuphero.app.alarm.AlarmScheduler
 import com.wakeuphero.app.data.ScheduleRepository
 import com.wakeuphero.core.GeneralAlarm
+import com.wakeuphero.core.enableGeneralAlarm
 import com.wakeuphero.core.UpcomingAlarm
 import com.wakeuphero.core.nextUpcomingAlarm
 import kotlinx.coroutines.flow.combine
@@ -76,8 +77,12 @@ class ScheduleViewModel(
 
     // 일반 알람 (검사는 화면에서 core의 validateGeneralAlarm으로 먼저 한다)
     fun saveGeneralAlarm(alarm: GeneralAlarm) = viewModelScope.launch { repository.saveGeneralAlarm(alarm) }
-    fun setGeneralAlarmEnabled(id: Int, enabled: Boolean) =
-        viewModelScope.launch { repository.setGeneralAlarmEnabled(id, enabled) }
+    // 켤 때는 core의 enableGeneralAlarm으로 (지난 한 번 알람이면 날짜를 다음으로 옮김)
+    fun setGeneralAlarmEnabled(id: Int, enabled: Boolean) = viewModelScope.launch {
+        val alarm = generalAlarms.value.find { it.id == id } ?: return@launch
+        if (enabled) repository.saveGeneralAlarm(enableGeneralAlarm(alarm, LocalDateTime.now()))
+        else repository.setGeneralAlarmEnabled(id, false)
+    }
     fun deleteGeneralAlarm(id: Int) = viewModelScope.launch { repository.deleteGeneralAlarm(id) }
 
     // 지금 근무표에 change를 적용한 결과를 저장 (바뀐 부분만 DB에 반영됨)

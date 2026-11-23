@@ -48,6 +48,6 @@ class ConsoleFormatTest {
 
     @Test
     fun `다음 알람이 없으면 없다고 알려준다`() {
-        assertEquals("다음 알람: 없음 (한 달 안에 알람이 울릴 근무가 없어요)", nextAlarmMessage(null))
+        assertEquals("다음 알람: 없음 (한 달 안에 울릴 알람이 없어요)", nextAlarmMessage(null))
     }
 }
