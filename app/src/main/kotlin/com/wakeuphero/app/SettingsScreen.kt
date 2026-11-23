@@ -37,6 +37,7 @@ import com.wakeuphero.core.AlarmRule
 import com.wakeuphero.core.DeleteShiftResult
 import com.wakeuphero.core.ShiftType
 import com.wakeuphero.core.alarmPreview
+import com.wakeuphero.core.formatTimeInput
 import com.wakeuphero.core.isValid
 import com.wakeuphero.core.nextShiftTypeId
 import com.wakeuphero.core.parseTimeText
@@ -143,7 +144,7 @@ fun ShiftTypeEditScreen(
         }
 
         if (!isOff) {
-            OutlinedTextField(timeText, { timeText = it }, label = { Text("출근 시간 (예: 07:00)") }, modifier = Modifier.fillMaxWidth())
+            FormattedField(timeText, { timeText = it }, ::formatTimeInput, "출근 시간 (예: 0700 → 07:00)", Modifier.fillMaxWidth())
 
             Text("알람 규칙", style = MaterialTheme.typography.titleMedium)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import com.wakeuphero.core.GeneralAlarm
 import com.wakeuphero.core.dayName
 import com.wakeuphero.core.defaultOneTimeDate
+import com.wakeuphero.core.formatDateInput
+import com.wakeuphero.core.formatTimeInput
 import com.wakeuphero.core.parseDateText
 import com.wakeuphero.core.parseTimeText
 import com.wakeuphero.core.repeatDaysText
@@ -115,7 +117,7 @@ fun GeneralAlarmEditScreen(
         TextButton(onClick = onClose) { Text("← 목록") }
         Text(if (original == null) "일반 알람 추가" else "일반 알람 고치기", style = MaterialTheme.typography.titleLarge)
 
-        OutlinedTextField(timeText, { timeText = it }, label = { Text("시각 (예: 07:00)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        FormattedField(timeText, { timeText = it }, ::formatTimeInput, "시각 (예: 0700 → 07:00)", Modifier.fillMaxWidth())
         OutlinedTextField(label, { label = it }, label = { Text("이름 (예: 시험, 비워도 돼요)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
 
         Text("반복 요일 (안 고르면 한 번만)", style = MaterialTheme.typography.titleMedium)
@@ -131,7 +133,7 @@ fun GeneralAlarmEditScreen(
         }
 
         if (days.isEmpty()) {
-            OutlinedTextField(dateText, { dateText = it }, label = { Text("날짜 (예: 2026-12-01)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            FormattedField(dateText, { dateText = it }, ::formatDateInput, "날짜 (예: 20261201 → 2026-12-01)", Modifier.fillMaxWidth())
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { dateText = now.toLocalDate().toString() }) { Text("오늘") }
                 OutlinedButton(onClick = { dateText = now.toLocalDate().plusDays(1).toString() }) { Text("내일") }
