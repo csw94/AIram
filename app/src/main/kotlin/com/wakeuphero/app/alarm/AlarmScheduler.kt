@@ -9,6 +9,8 @@ import com.wakeuphero.app.MainActivity
 import com.wakeuphero.app.WakeUpHeroApp
 import com.wakeuphero.core.UpcomingAlarm
 import com.wakeuphero.core.nextUpcomingAlarm
+import com.wakeuphero.core.snoozeText
+import com.wakeuphero.core.snoozeTime
 import kotlinx.coroutines.flow.first
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -45,8 +47,9 @@ object AlarmScheduler {
         schedule(context, next)
     }
 
+    // 다시 알림: 지금부터 minutes분 뒤 (글 앞에 "다시 알림 · "을 한 번만 붙임)
     fun snooze(context: Context, minutes: Long, title: String, text: String) =
-        setAlarm(context, REQUEST_SNOOZE, LocalDateTime.now().plusMinutes(minutes), title, "다시 알림 · $text")
+        setAlarm(context, REQUEST_SNOOZE, snoozeTime(LocalDateTime.now(), minutes), title, snoozeText(text))
 
     // 테스트용: seconds초 뒤에 울리기
     fun scheduleTest(context: Context, seconds: Long) =

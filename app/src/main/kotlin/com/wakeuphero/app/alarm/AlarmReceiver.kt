@@ -4,12 +4,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.wakeuphero.app.AppSettings
+import com.wakeuphero.core.snoozeMinutesOrDefault
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 // 예약한 시각이 되면 휴대폰이 이 리시버를 깨운다 → 알람 울리기 + 다음 알람 예약
-// 알림의 [끄기] [5분 뒤] 버튼도 여기로 온다
+// 알림의 [끄기] [5분 뒤] [10분 뒤] 버튼도 여기로 온다
 class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val title = intent.getStringExtra(AlarmActivity.EXTRA_TITLE) ?: "알람"
@@ -22,7 +23,8 @@ class AlarmReceiver : BroadcastReceiver() {
             // 미션 알람이면 예전 알림의 [끄기]가 눌려도 무시 (알람 화면에서 문제를 풀어야 꺼짐)
             ACTION_DISMISS -> if (!AppSettings.isMathMission(context)) AlarmService.stop(context)
             ACTION_SNOOZE -> {
-                AlarmScheduler.snooze(context, AlarmActivity.SNOOZE_MINUTES, title, text.removePrefix("다시 알림 · "))
+                val minutes = snoozeMinutesOrDefault(intent.getLongExtra(AlarmActivity.EXTRA_MINUTES, -1))
+                AlarmScheduler.snooze(context, minutes, title, text)
                 AlarmService.stop(context)
             }
         }
@@ -31,7 +33,7 @@ class AlarmReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_FIRE = "com.wakeuphero.app.ALARM_FIRE"
         const val ACTION_DISMISS = "com.wakeuphero.app.ALARM_DISMISS" // 알림의 [끄기]
-        const val ACTION_SNOOZE = "com.wakeuphero.app.ALARM_SNOOZE"   // 알림의 [5분 뒤]
+        const val ACTION_SNOOZE = "com.wakeuphero.app.ALARM_SNOOZE"   // 알림의 [5분 뒤] [10분 뒤] (몇 분인지는 EXTRA_MINUTES)
     }
 }
 

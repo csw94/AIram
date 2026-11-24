@@ -7,6 +7,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import com.wakeuphero.app.AppSettings
+import com.wakeuphero.core.SNOOZE_OPTIONS
+import com.wakeuphero.core.snoozeLabel
 
 // 알람 알림: 잠금 화면이면 알람 화면(AlarmActivity)을 바로 띄운다
 // 소리·진동은 AlarmService가 직접 울리므로 이 알림 자체는 조용하다
@@ -52,12 +54,17 @@ object AlarmNotifications {
                 // 미션 알람이면 [끄기] 버튼을 빼서 문제를 건너뛰지 못하게 (알림을 누르면 알람 화면에서 풀기)
                 if (!AppSettings.isMathMission(context)) addAction(action(context, "끄기", AlarmReceiver.ACTION_DISMISS, title, text, 2))
             }
-            .addAction(action(context, "${AlarmActivity.SNOOZE_MINUTES}분 뒤", AlarmReceiver.ACTION_SNOOZE, title, text, 3))
+            .apply {
+                // [5분 뒤] [10분 뒤]: 버튼마다 요청 코드를 달리해야 서로 덮어쓰지 않음 (3, 4)
+                SNOOZE_OPTIONS.forEachIndexed { i, minutes ->
+                    addAction(action(context, snoozeLabel(minutes), AlarmReceiver.ACTION_SNOOZE, title, text, 3 + i, minutes))
+                }
+            }
             .build()
     }
 
-    // 알림에 붙는 버튼: 누르면 AlarmReceiver가 끄기/다시 알림 처리
-    private fun action(context: Context, label: String, action: String, title: String, text: String, requestCode: Int) =
+    // 알림에 붙는 버튼: 누르면 AlarmReceiver가 끄기/다시 알림 처리 (알림 버튼은 최대 3개)
+    private fun action(context: Context, label: String, action: String, title: String, text: String, requestCode: Int, minutes: Long? = null) =
         Notification.Action.Builder(
             null, label,
             PendingIntent.getBroadcast(
@@ -65,7 +72,8 @@ object AlarmNotifications {
                 Intent(context, AlarmReceiver::class.java)
                     .setAction(action)
                     .putExtra(AlarmActivity.EXTRA_TITLE, title)
-                    .putExtra(AlarmActivity.EXTRA_TEXT, text),
+                    .putExtra(AlarmActivity.EXTRA_TEXT, text)
+                    .apply { if (minutes != null) putExtra(AlarmActivity.EXTRA_MINUTES, minutes) },
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         ).build()

@@ -11,6 +11,9 @@ import com.wakeuphero.app.WakeUpHeroTheme
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import com.wakeuphero.core.SNOOZE_OPTIONS
+import com.wakeuphero.core.snoozeLabel
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -32,7 +35,7 @@ import androidx.compose.ui.unit.sp
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
-// 알람이 울릴 때 뜨는 화면: [5분 뒤 다시 알림] [끄기] (미션 알람이면 [끄기] 대신 수학 문제)
+// 알람이 울릴 때 뜨는 화면: 다시 알림 [5분 뒤][10분 뒤] + [끄기] (미션 알람이면 [끄기] 대신 수학 문제)
 class AlarmActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,9 +60,15 @@ class AlarmActivity : ComponentActivity() {
                         Text("⏰ $title", style = MaterialTheme.typography.headlineMedium)
                         Text(text, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                         Text("일어나세요 용사여!", style = MaterialTheme.typography.bodyLarge)
+                        // [5분 뒤] [10분 뒤] 나란히 (반쯤 깬 상태에서도 누르기 쉽게 반반 크게)
                         val snoozeButton = @Composable {
-                            OutlinedButton(onClick = { snooze(title, text) }, modifier = Modifier.fillMaxWidth()) {
-                                Text("${SNOOZE_MINUTES}분 뒤 다시 알림")
+                            Text("다시 알림", style = MaterialTheme.typography.labelLarge)
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                SNOOZE_OPTIONS.forEach { minutes ->
+                                    OutlinedButton(onClick = { snooze(minutes, title, text) }, modifier = Modifier.weight(1f)) {
+                                        Text(snoozeLabel(minutes))
+                                    }
+                                }
                             }
                         }
                         if (mission) {
@@ -83,8 +92,8 @@ class AlarmActivity : ComponentActivity() {
         finish()
     }
 
-    private fun snooze(title: String, text: String) {
-        AlarmScheduler.snooze(this, SNOOZE_MINUTES, title, text.removePrefix("다시 알림 · "))
+    private fun snooze(minutes: Long, title: String, text: String) {
+        AlarmScheduler.snooze(this, minutes, title, text)
         dismiss()
     }
 
@@ -104,6 +113,6 @@ class AlarmActivity : ComponentActivity() {
     companion object {
         const val EXTRA_TITLE = "title"
         const val EXTRA_TEXT = "text"
-        const val SNOOZE_MINUTES = 5L
+        const val EXTRA_MINUTES = "snooze_minutes" // 알림의 다시 알림 버튼이 몇 분인지
     }
 }
