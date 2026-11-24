@@ -29,7 +29,8 @@
 | `89cca36` | **A1 미션 알람** — core `MathMission.kt`(덧셈·곱셈 번갈아 3문제, 정답 확인, 테스트 7개), app `AppSettings`(SharedPreferences), 홈의 미션 스위치, 알람 화면의 `MathMissionSection`, 미션 중 알림 [끄기] 제거·뒤로가기 막기, 알람 화면 키보드 대응(imePadding+스크롤) — core 테스트 115개, 에뮬레이터에서 문제 풀이로 끄기 확인 |
 | `677e045` | **A1 휴대폰 테스트 9개 통과** (스위치 유지·[끄기] 없음·뒤로가기 막힘·키보드 대응·오답 안내·정답 3개로 끄기·다시 알림 후 미션·미션 끄면 기존 동작) |
 | `1c5e3db` | **A5 다크 모드** — 휴대폰 설정을 따라감: `Theme.kt`(WakeUpHeroTheme, 밝은/어두운 색), 창 테마 `values(-night)/themes.xml`(여는 순간 흰 화면 번쩍임 방지), `enableEdgeToEdge`(상단 아이콘 색 자동), 직접 쓴 색(달력 빈 칸·색 고르기 테두리)을 테마 색으로 — 에뮬레이터 다크/밝은 모드 화면 캡처로 확인 |
-| (이 커밋) | **A2 다시 알림 5분/10분** — core `Snooze.kt`(선택지 5·10분, 울릴 시각, 잘못된 값은 5분, "다시 알림 · " 겹침 방지, 버튼 글, 테스트 5개), 알람 화면에 [5분 뒤][10분 뒤] 나란히, 알림 버튼도 [끄기][5분 뒤][10분 뒤] (분은 `EXTRA_MINUTES`) — core 테스트 120개, 에뮬레이터에서 알림 [10분 뒤] → 10분 뒤 예약 확인 |
+| `dead32b` | **A2 다시 알림 5분/10분** — core `Snooze.kt`(선택지 5·10분, 울릴 시각, 잘못된 값은 5분, "다시 알림 · " 겹침 방지, 버튼 글, 테스트 5개), 알람 화면에 [5분 뒤][10분 뒤] 나란히, 알림 버튼도 [끄기][5분 뒤][10분 뒤] (분은 `EXTRA_MINUTES`) — core 테스트 120개, 에뮬레이터에서 알림 [10분 뒤] → 10분 뒤 예약 확인 |
+| (이 커밋) | **A4 근무 유형별 알람음** — core `ShiftType.soundUri`·`withSound()`(휴무·빈 값은 null), `UpcomingAlarm.sound`(근무=유형 소리, 일반=기본, 테스트 6개), app DB **version 3**(`MIGRATION_2_3` = shift_types에 soundUri 열), 근무 유형 편집에 알람음 버튼(`AlarmSoundPicker.kt`, 휴대폰 기본 소리 선택 창), 예약→리시버→서비스→알림→알람 화면→다시 알림까지 `EXTRA_SOUND` 전달, 서비스는 고른 소리를 못 틀면 기본 알람음, 디버그 테스트 알람은 다음 근무 알람음 — core 테스트 126개, lint 오류 0, 에뮬레이터에서 마이그레이션(기존 유형 유지)·소리 선택·재시작 후 유지·실제 재생 확인 |
 
 - 콘솔 입출력 설계: 파일 입력 + 달력형 출력
 - 기획서에 **S8 근무표 사진으로 입력** 추가 (Android 단계에서 설계안 비교 후 진행)
@@ -88,7 +89,12 @@ AIram/
 
 ## 3. 현재 진행 상태 및 남은 작업
 
-**현재 위치: A2 다시 알림 완료(휴대폰 확인 대기, A5 다크 모드도 휴대폰 확인 대기) → 남은 것: A4(근무 유형별 알람음), 회고**
+**현재 위치: A2·A4·A5 완료, 휴대폰 테스트(아래 목록 한 번에) 대기 → 남은 것: 회고, (선택) S8 사진 입력·앱 아이콘**
+
+### 휴대폰 테스트 대기 목록 (A5·A2·A4)
+1. A5: 휴대폰 다크 모드 켜고 끄며 모든 화면 색·글자 잘 보이는지, 앱 열 때 흰 화면 번쩍임 없는지
+2. A2: 알람 화면 [5분 뒤]·[10분 뒤], 알림 버튼 [끄기][5분 뒤][10분 뒤], 다시 알림 두 번 눌러도 "다시 알림 ·" 한 번만
+3. A4: 근무 유형에 알람음 고르기 → 앱 껐다 켜도 유지, 디버그 테스트 알람이 그 소리로 울림, 다시 알림도 같은 소리, 일반 알람·소리 안 고른 유형은 기본 알람음, 업데이트 설치 후 기존 근무표 유지(DB v3)
 
 ### 1단계: 콘솔 ✅ 전부 완료
 - 콘솔 입출력, 패턴 자동 채우기, 이번만 끄기, 근무 유형 삭제 막기
@@ -122,8 +128,8 @@ AIram/
 | `build.gradle.kts` | 루트: 플러그인 버전만 (`apply false`) |
 | `core/build.gradle.kts` | core 빌드 (kotlin jvm + application, 실행 폴더 = 루트) |
 | `app/build.gradle.kts` | app 빌드 (AGP, Compose, `implementation(project(":core"))`) |
-| `core/src/main/kotlin/com/wakeuphero/core/` | `Snooze`(SNOOZE_OPTIONS·snoozeTime·snoozeMinutesOrDefault·snoozeText·snoozeLabel) `GeneralAlarm`(GeneralAlarm·generalAlarmTimes·UpcomingAlarm·upcomingAlarms·nextUpcomingAlarm·validateGeneralAlarm·defaultOneTimeDate·repeatDaysText) `AlarmInfo`(nextAlarmInfo·alarmTitle·alarmText, nextAlarm은 이걸 재사용) `ShiftTypeEdit`(validateShiftType·nextShiftTypeId·parseTimeText·alarmPreview) `ScheduleDiff` `ScheduleEdit`(setShift·removeShift·toggleSkip·applyPattern·parsePatternCodes·monthGrid) `Models` `AlarmCalculator` `DefaultShifts` `ScheduleParser` `PatternFill` `SkipAlarm` `DeleteShiftType` `ConsoleFormat` `Main`(콘솔) |
-| `core/src/test/kotlin/com/wakeuphero/core/` | 테스트 120개 (알람 계산 18, 파일 읽기 7, 출력 4, 환경 1, 패턴 9, 이번만 끄기 9, 유형 삭제 6, 근무표 편집 10, 저장 차이 5, 근무 유형 편집 12, 알람 정보 5, 일반 알람 13, 입력 형식 5, 미션 7, 다시 알림 5 등) |
+| `core/src/main/kotlin/com/wakeuphero/core/` | `Models`(ShiftType.soundUri·withSound) `Snooze`(SNOOZE_OPTIONS·snoozeTime·snoozeMinutesOrDefault·snoozeText·snoozeLabel) `GeneralAlarm`(GeneralAlarm·generalAlarmTimes·UpcomingAlarm·upcomingAlarms·nextUpcomingAlarm·validateGeneralAlarm·defaultOneTimeDate·repeatDaysText) `AlarmInfo`(nextAlarmInfo·alarmTitle·alarmText, nextAlarm은 이걸 재사용) `ShiftTypeEdit`(validateShiftType·nextShiftTypeId·parseTimeText·alarmPreview) `ScheduleDiff` `ScheduleEdit`(setShift·removeShift·toggleSkip·applyPattern·parsePatternCodes·monthGrid) `Models` `AlarmCalculator` `DefaultShifts` `ScheduleParser` `PatternFill` `SkipAlarm` `DeleteShiftType` `ConsoleFormat` `Main`(콘솔) |
+| `core/src/test/kotlin/com/wakeuphero/core/` | 테스트 126개 (알람 계산 18, 파일 읽기 7, 출력 4, 환경 1, 패턴 9, 이번만 끄기 9, 유형 삭제 6, 근무표 편집 10, 저장 차이 5, 근무 유형 편집 12, 알람 정보 5, 일반 알람 13, 입력 형식 5, 미션 7, 다시 알림 5, 알람음 6 등) |
 | `app/src/main/kotlin/com/wakeuphero/app/MainActivity.kt` | `App()`: 화면 전환(enum Screen: HOME, CALENDAR, SHIFT_LIST, SHIFT_EDIT, GENERAL_LIST, GENERAL_EDIT), 뒤로가기 |
 | `app/.../ScheduleViewModel.kt` | 저장소의 Flow → StateFlow, 편집 = core 함수로 새 근무표 계산 → 저장소에 저장 → DB 갱신으로 화면 자동 반영. `Factory`로 저장소 주입 |
 | `app/.../HomeScreen.kt` | 오늘·내일 근무, 다음 알람(근무+일반), 오늘·내일 알람 목록(최대 8개), [근무표 달력][근무 유형 설정][일반 알람] |
@@ -139,9 +145,10 @@ AIram/
 | `app/.../alarm/MathMissionSection.kt` | 미션 문제 풀이 UI (씨앗·푼 개수 rememberSaveable, 키패드 [완료]로도 제출) |
 | `app/.../AppSettings.kt` | SharedPreferences 설정 (math_mission) |
 | `app/.../Theme.kt` | `WakeUpHeroTheme`: 모든 화면을 감싸는 테마 (새 화면도 색은 MaterialTheme.colorScheme에서) |
+| `app/.../AlarmSoundPicker.kt` | `AlarmSoundRow`: 근무 유형 알람음 버튼 → 휴대폰 소리 선택 창(RingtoneManager), "기본값" 고르면 null 저장, 소리 이름 표시 |
 | `app/.../data/Entities.kt` | DB 표 4개(shift_types, alarm_rules, work_days, general_alarms — 요일은 "1,3,5" 글자) + core ↔ DB 변환 (날짜·시각은 글자로 저장) |
 | `app/.../data/AppDao.kt` | 조회는 Flow(자동 갱신), `applyScheduleChanges()`는 @Transaction으로 넣기·지우기 한 묶음 |
-| `app/.../data/AppDatabase.kt` | Room DB (파일명 wakeuphero.db, **version 2**, `MIGRATION_1_2` = general_alarms 표 추가) |
+| `app/.../data/AppDatabase.kt` | Room DB (파일명 wakeuphero.db, **version 3**, `MIGRATION_1_2` = general_alarms 표, `MIGRATION_2_3` = shift_types.soundUri 열) |
 | `app/.../data/ScheduleRepository.kt` | core 모양으로만 주고받는 저장소, `saveSchedule(before, after)` = scheduleDiff로 바뀐 부분만 저장 |
 | `app/.../WakeUpHeroApp.kt` | Application: DB·저장소를 앱에 하나만 생성 |
 | `app/src/main/AndroidManifest.xml`, `res/values/strings.xml` | 앱 이름 "일어나세요용사여" |
@@ -192,3 +199,6 @@ AIram/
 - 다크 모드 주의: 색을 직접 쓰지 말 것(Color.Black 등). 근무 색 배경은 투명도 0.45라 어두운 바탕에서도 구분됨
 - 분기점 기록(A2): **알람 화면·알림에 [5분 뒤][10분 뒤] 버튼 2개**(vs 홈에서 하나 미리 설정 / 근무 유형·일반 알람마다 설정 = DB v3) — 기획서 "5분 / 10분" 그대로, 울릴 때 바로 고름
 - 제가 정한 것(A2): 선택지는 5·10분 두 개, 알림 버튼의 분 값이 없거나 이상하면 5분, 다시 알림 글 앞 표시는 한 번만, 미션 중에도 두 버튼 모두 허용, 알림 버튼 요청 코드 끄기 2·5분 3·10분 4 (Android 알림 버튼은 최대 3개라 선택지를 더 늘리려면 알림 쪽 구성을 바꿔야 함)
+- 분기점 기록(A4): **휴대폰 소리 선택 창으로 고르고 소리 주소를 근무 유형에 저장(DB v3)**(vs 앱에 소리 파일 내장 / 목록·미리듣기 화면 직접 만들기) — 소리 파일 저작권 문제 없음, 미리듣기는 선택 창이 해 줌
+- 제가 정한 것(A4): 알람음은 근무 유형에만(일반 알람은 기본 알람음), 선택 창에서 "기본값"을 고르면 null 저장(휴대폰 기본 알람음이 바뀌면 따라감), 무음은 고를 수 없음, 휴무 유형은 소리 없음, 고른 소리를 못 틀면(지워짐 등) 기본 알람음으로 대신, 같은 시각 근무·일반 알람이 겹치면 근무 알람음, 디버그 테스트 알람은 다음 근무 알람의 소리
+- 알람음 메모: 에뮬레이터 선택 창이 준 주소는 `content://media/external_primary/audio/media/38?...` 형태(공용 저장소)였고 권한 없이 재생됨. 재생/실패는 logcat `AlarmService` 태그로 확인

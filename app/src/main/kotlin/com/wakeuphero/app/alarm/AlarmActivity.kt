@@ -44,6 +44,7 @@ class AlarmActivity : ComponentActivity() {
 
         val title = intent.getStringExtra(EXTRA_TITLE) ?: "알람"
         val text = intent.getStringExtra(EXTRA_TEXT) ?: ""
+        val sound = intent.getStringExtra(EXTRA_SOUND) // 다시 알림도 같은 알람음으로
         val now = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
         val mission = AppSettings.isMathMission(this)
 
@@ -65,7 +66,7 @@ class AlarmActivity : ComponentActivity() {
                             Text("다시 알림", style = MaterialTheme.typography.labelLarge)
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 SNOOZE_OPTIONS.forEach { minutes ->
-                                    OutlinedButton(onClick = { snooze(minutes, title, text) }, modifier = Modifier.weight(1f)) {
+                                    OutlinedButton(onClick = { snooze(minutes, title, text, sound) }, modifier = Modifier.weight(1f)) {
                                         Text(snoozeLabel(minutes))
                                     }
                                 }
@@ -92,8 +93,8 @@ class AlarmActivity : ComponentActivity() {
         finish()
     }
 
-    private fun snooze(minutes: Long, title: String, text: String) {
-        AlarmScheduler.snooze(this, minutes, title, text)
+    private fun snooze(minutes: Long, title: String, text: String, sound: String?) {
+        AlarmScheduler.snooze(this, minutes, title, text, sound)
         dismiss()
     }
 
@@ -113,6 +114,7 @@ class AlarmActivity : ComponentActivity() {
     companion object {
         const val EXTRA_TITLE = "title"
         const val EXTRA_TEXT = "text"
+        const val EXTRA_SOUND = "sound" // 알람음 주소 (null = 기본 알람음)
         const val EXTRA_MINUTES = "snooze_minutes" // 알림의 다시 알림 버튼이 몇 분인지
     }
 }

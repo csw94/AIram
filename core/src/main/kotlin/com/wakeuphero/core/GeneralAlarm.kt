@@ -41,15 +41,18 @@ sealed interface UpcomingAlarm {
     val time: LocalDateTime
     val title: String
     val text: String
+    val sound: String? // 알람음 주소, null = 휴대폰 기본 알람음
 
     data class Work(val info: AlarmInfo) : UpcomingAlarm {
         override val time get() = info.time
         override val title get() = alarmTitle(info)
         override val text get() = alarmText(info)
+        override val sound get() = info.shiftType.soundUri
     }
 
     data class General(val alarm: GeneralAlarm, override val time: LocalDateTime) : UpcomingAlarm {
         override val title get() = alarm.label.ifBlank { "알람" }
+        override val sound: String? get() = null // 일반 알람은 기본 알람음
         override val text get() = buildString {
             append(time.format(generalTimeFormat))
             if (alarm.isRepeating) append(" · ").append(repeatDaysText(alarm.days))

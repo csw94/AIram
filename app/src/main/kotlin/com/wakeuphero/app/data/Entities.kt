@@ -19,7 +19,8 @@ data class ShiftTypeEntity(
     val name: String,
     val shortName: String,
     val startTime: String?, // "07:00", 휴무는 null
-    val color: String
+    val color: String,
+    val soundUri: String? = null // 알람음 주소 (DB version 3에서 추가), null = 기본 알람음
 )
 
 @Entity(tableName = "alarm_rules")
@@ -38,8 +39,8 @@ data class WorkDayEntity(
 )
 
 // ── core ↔ DB 변환 ───────────────────────────────────────────
-fun ShiftTypeEntity.toCore() = ShiftType(id, name, shortName, startTime?.let(LocalTime::parse), color)
-fun ShiftType.toEntity() = ShiftTypeEntity(id, name, shortName, startTime?.toString(), color)
+fun ShiftTypeEntity.toCore() = ShiftType(id, name, shortName, startTime?.let(LocalTime::parse), color, soundUri)
+fun ShiftType.toEntity() = ShiftTypeEntity(id, name, shortName, startTime?.toString(), color, soundUri)
 
 fun AlarmRuleEntity.toCore() = AlarmRule(shiftTypeId, minutesBefore, intervalMinutes, repeatCount)
 fun AlarmRule.toEntity() = AlarmRuleEntity(shiftTypeId, minutesBefore, intervalMinutes, repeatCount)

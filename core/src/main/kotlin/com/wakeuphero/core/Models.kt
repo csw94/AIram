@@ -9,10 +9,14 @@ data class ShiftType(
     val name: String,          // "주간"
     val shortName: String,     // "D"
     val startTime: LocalTime?, // 07:00 (휴무는 null)
-    val color: String          // "#FFD54F"
+    val color: String,         // "#FFD54F"
+    val soundUri: String? = null // 알람음 (휴대폰 소리 주소), null = 휴대폰 기본 알람음
 ) {
     // 출근 시간이 없으면 휴무
     val isOff: Boolean get() = startTime == null
+
+    // 저장할 알람음 정리: 휴무는 알람이 없으니 소리도 없음, 빈 값은 기본 알람음
+    fun withSound(uri: String?): ShiftType = copy(soundUri = if (isOff) null else uri?.takeIf { it.isNotBlank() })
 }
 
 // 알람 규칙 (근무 유형마다 하나씩)

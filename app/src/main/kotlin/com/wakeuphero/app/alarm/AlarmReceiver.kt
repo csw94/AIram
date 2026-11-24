@@ -15,16 +15,17 @@ class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val title = intent.getStringExtra(AlarmActivity.EXTRA_TITLE) ?: "알람"
         val text = intent.getStringExtra(AlarmActivity.EXTRA_TEXT) ?: ""
+        val sound = intent.getStringExtra(AlarmActivity.EXTRA_SOUND) // 근무 유형 알람음 (없으면 기본)
         when (intent.action) {
             ACTION_FIRE -> {
-                AlarmService.start(context, title, text)
+                AlarmService.start(context, title, text, sound)
                 rescheduleAsync(context)
             }
             // 미션 알람이면 예전 알림의 [끄기]가 눌려도 무시 (알람 화면에서 문제를 풀어야 꺼짐)
             ACTION_DISMISS -> if (!AppSettings.isMathMission(context)) AlarmService.stop(context)
             ACTION_SNOOZE -> {
                 val minutes = snoozeMinutesOrDefault(intent.getLongExtra(AlarmActivity.EXTRA_MINUTES, -1))
-                AlarmScheduler.snooze(context, minutes, title, text)
+                AlarmScheduler.snooze(context, minutes, title, text, sound)
                 AlarmService.stop(context)
             }
         }

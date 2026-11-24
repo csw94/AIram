@@ -29,7 +29,7 @@ object AlarmNotifications {
         manager.createNotificationChannel(channel)
     }
 
-    fun build(context: Context, title: String, text: String): Notification {
+    fun build(context: Context, title: String, text: String, sound: String?): Notification {
         ensureChannel(context)
 
         // 알람 화면을 여는 PendingIntent (잠금 화면: 바로 전체 화면 / 사용 중: 알림을 누르면 열림)
@@ -38,6 +38,7 @@ object AlarmNotifications {
             Intent(context, AlarmActivity::class.java)
                 .putExtra(AlarmActivity.EXTRA_TITLE, title)
                 .putExtra(AlarmActivity.EXTRA_TEXT, text)
+                .putExtra(AlarmActivity.EXTRA_SOUND, sound)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_USER_ACTION),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
@@ -52,19 +53,19 @@ object AlarmNotifications {
             .setOngoing(true) // 밀어서 지울 수 없음 → 알람 화면에서 끄기
             .apply {
                 // 미션 알람이면 [끄기] 버튼을 빼서 문제를 건너뛰지 못하게 (알림을 누르면 알람 화면에서 풀기)
-                if (!AppSettings.isMathMission(context)) addAction(action(context, "끄기", AlarmReceiver.ACTION_DISMISS, title, text, 2))
+                if (!AppSettings.isMathMission(context)) addAction(action(context, "끄기", AlarmReceiver.ACTION_DISMISS, title, text, sound, 2))
             }
             .apply {
                 // [5분 뒤] [10분 뒤]: 버튼마다 요청 코드를 달리해야 서로 덮어쓰지 않음 (3, 4)
                 SNOOZE_OPTIONS.forEachIndexed { i, minutes ->
-                    addAction(action(context, snoozeLabel(minutes), AlarmReceiver.ACTION_SNOOZE, title, text, 3 + i, minutes))
+                    addAction(action(context, snoozeLabel(minutes), AlarmReceiver.ACTION_SNOOZE, title, text, sound, 3 + i, minutes))
                 }
             }
             .build()
     }
 
     // 알림에 붙는 버튼: 누르면 AlarmReceiver가 끄기/다시 알림 처리 (알림 버튼은 최대 3개)
-    private fun action(context: Context, label: String, action: String, title: String, text: String, requestCode: Int, minutes: Long? = null) =
+    private fun action(context: Context, label: String, action: String, title: String, text: String, sound: String?, requestCode: Int, minutes: Long? = null) =
         Notification.Action.Builder(
             null, label,
             PendingIntent.getBroadcast(
@@ -73,6 +74,7 @@ object AlarmNotifications {
                     .setAction(action)
                     .putExtra(AlarmActivity.EXTRA_TITLE, title)
                     .putExtra(AlarmActivity.EXTRA_TEXT, text)
+                    .putExtra(AlarmActivity.EXTRA_SOUND, sound)
                     .apply { if (minutes != null) putExtra(AlarmActivity.EXTRA_MINUTES, minutes) },
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )

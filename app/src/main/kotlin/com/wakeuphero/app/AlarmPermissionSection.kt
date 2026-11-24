@@ -32,7 +32,7 @@ import com.wakeuphero.app.alarm.AlarmScheduler
 // 알람이 제대로 울리려면 필요한 권한 3가지를 확인하고, 없으면 켜는 버튼을 보여준다
 // + 디버그 앱에서는 "10초 뒤 테스트 알람" 버튼
 @Composable
-fun AlarmPermissionSection() {
+fun AlarmPermissionSection(testSound: String? = null) {
     val context = LocalContext.current
     // 설정 화면에 갔다가 돌아오면(onResume) 다시 확인하도록 숫자를 바꿔 화면을 새로 그린다
     var refresh by remember { mutableIntStateOf(0) }
@@ -68,8 +68,8 @@ fun AlarmPermissionSection() {
         }
 
         if (BuildConfig.DEBUG) {
-            OutlinedButton(onClick = { AlarmScheduler.scheduleTest(context, 10) }) {
-                Text("🔔 10초 뒤 테스트 알람 (디버그용)")
+            OutlinedButton(onClick = { AlarmScheduler.scheduleTest(context, 10, testSound) }) {
+                Text("🔔 10초 뒤 테스트 알람 (디버그용, 다음 근무 알람음)")
             }
         }
     }

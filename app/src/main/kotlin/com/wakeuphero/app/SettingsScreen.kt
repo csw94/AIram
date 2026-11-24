@@ -108,6 +108,7 @@ fun ShiftTypeEditScreen(
     var isOff by remember { mutableStateOf(original != null && original.isOff) }
     var timeText by remember { mutableStateOf(original?.startTime?.toString() ?: "09:00") }
     var color by remember { mutableStateOf(original?.color ?: colorChoices[3]) }
+    var soundUri by remember { mutableStateOf(original?.soundUri) }
     var beforeText by remember { mutableStateOf((originalRule?.minutesBefore ?: 90).toString()) }
     var intervalText by remember { mutableStateOf((originalRule?.intervalMinutes ?: 10).toString()) }
     var countText by remember { mutableStateOf((originalRule?.repeatCount ?: 3).toString()) }
@@ -115,7 +116,7 @@ fun ShiftTypeEditScreen(
 
     // ── 입력값으로 결과 만들기 + 문제 찾기 ──
     val startTime = if (isOff) null else parseTimeText(timeText)
-    val shiftType = ShiftType(id, name.trim(), shortName.trim().uppercase(), startTime, color)
+    val shiftType = ShiftType(id, name.trim(), shortName.trim().uppercase(), startTime, color).withSound(soundUri)
     val rule = if (isOff) null else AlarmRule(
         id,
         beforeText.toIntOrNull() ?: 0,
@@ -156,6 +157,8 @@ fun ShiftTypeEditScreen(
             if (startTime != null && rule != null && rule.isValid()) {
                 Text("미리보기: " + alarmPreview(startTime, rule).joinToString("  ") { it.format(previewFormat) })
             }
+
+            AlarmSoundRow(soundUri) { soundUri = it }
         }
 
         Text("색상", style = MaterialTheme.typography.titleMedium)

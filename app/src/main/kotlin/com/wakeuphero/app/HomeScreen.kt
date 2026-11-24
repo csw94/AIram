@@ -22,6 +22,7 @@ import com.wakeuphero.core.defaultShiftTypes
 import com.wakeuphero.core.fillPattern
 import com.wakeuphero.core.GeneralAlarm
 import com.wakeuphero.core.upcomingAlarms
+import com.wakeuphero.core.UpcomingAlarm
 import com.wakeuphero.core.nextAlarmMessage
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -43,7 +44,10 @@ fun HomeScreen(
 ) {
     // 지금부터 내일 23:59까지 울릴 알람 (근무 + 일반, 시각순). 모레 00:00은 "내일"이 아니므로 제외
     val soon = upcomingAlarms(now, now.toLocalDate().plusDays(1).atTime(23, 59, 59), schedule, shiftTypes, alarmRules, generalAlarms)
-    val next = upcomingAlarms(now, now.plusMonths(1), schedule, shiftTypes, alarmRules, generalAlarms).firstOrNull()?.time
+    val month = upcomingAlarms(now, now.plusMonths(1), schedule, shiftTypes, alarmRules, generalAlarms)
+    val next = month.firstOrNull()?.time
+    // 디버그 테스트 알람은 다음 근무 알람의 알람음으로 (A4 확인용)
+    val testSound = month.filterIsInstance<UpcomingAlarm.Work>().firstOrNull()?.sound
 
     Column(
         modifier = Modifier.padding(24.dp),
@@ -71,7 +75,7 @@ fun HomeScreen(
             }
             Switch(checked = mathMission, onCheckedChange = onMathMissionChange)
         }
-        if (showAlarmStatus) AlarmPermissionSection()
+        if (showAlarmStatus) AlarmPermissionSection(testSound)
     }
 }
 

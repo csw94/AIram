@@ -7,8 +7,10 @@ import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import android.os.PowerManager
 import android.os.VibrationAttributes
 import android.os.VibrationEffect
@@ -27,8 +29,9 @@ class AlarmService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val title = intent?.getStringExtra(AlarmActivity.EXTRA_TITLE) ?: "알람"
         val text = intent?.getStringExtra(AlarmActivity.EXTRA_TEXT) ?: ""
+        val sound = intent?.getStringExtra(AlarmActivity.EXTRA_SOUND)
 
-        val notification = AlarmNotifications.build(this, title, text)
+        val notification = AlarmNotifications.build(this, title, text, sound)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(
                 AlarmNotifications.NOTIFICATION_ID, notification,
@@ -37,32 +40,18 @@ class AlarmService : Service() {
         } else {
             startForeground(AlarmNotifications.NOTIFICATION_ID, notification)
         }
-        startRinging()
+        startRinging(sound)
         return START_NOT_STICKY
     }
 
-    private fun startRinging() {
+    private fun startRinging(sound: String?) {
         stopSound() // 이미 울리는 중이면(다시 알림 겹침 등) 처음부터 다시
         wakeLock = getSystemService(PowerManager::class.java)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "wakeuphero:alarm")
             .apply { acquire(MAX_RING_MILLIS) }
 
-        player = try {
-            MediaPlayer().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM) // 알람 볼륨 → 무음 모드에서도 울림
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                        .build()
-                )
-                setDataSource(this@AlarmService, alarmSoundUri())
-                isLooping = true // 끌 때까지 반복
-                prepare()
-                start()
-            }
-        } catch (e: Exception) {
-            null // 소리 파일 문제여도 진동·화면은 계속
-        }
+        // 고른 알람음 → 못 틀면(지워진 소리 등) 기본 알람음
+        player = sound?.let { playLooping(Uri.parse(it)) } ?: playLooping(alarmSoundUri())
 
         vibrator = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             getSystemService(VibratorManager::class.java).defaultVibrator
@@ -77,6 +66,31 @@ class AlarmService : Service() {
                 @Suppress("DEPRECATION")
                 v.vibrate(effect, AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).build())
             }
+        }
+    }
+
+    // 소리를 끌 때까지 반복 재생 (못 틀면 null → 다음 후보로, 그래도 안 되면 진동·화면만)
+    private fun playLooping(uri: Uri?): MediaPlayer? {
+        if (uri == null) return null
+        val mp = MediaPlayer()
+        return try {
+            mp.apply {
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ALARM) // 알람 볼륨 → 무음 모드에서도 울림
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                        .build()
+                )
+                setDataSource(this@AlarmService, uri)
+                isLooping = true // 끌 때까지 반복
+                prepare()
+                start()
+                Log.i(TAG, "알람음 재생: $uri")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "알람음 재생 실패: $uri", e)
+            mp.release()
+            null
         }
     }
 
@@ -101,14 +115,16 @@ class AlarmService : Service() {
     }
 
     companion object {
+        private const val TAG = "AlarmService"
         private const val MAX_RING_MILLIS = 10 * 60 * 1000L // 깨어 있게 붙잡는 최대 시간
         private val VIBRATION_PATTERN = longArrayOf(0, 800, 400, 800, 1000)
 
-        fun start(context: Context, title: String, text: String) {
+        fun start(context: Context, title: String, text: String, sound: String?) {
             context.startForegroundService(
                 Intent(context, AlarmService::class.java)
                     .putExtra(AlarmActivity.EXTRA_TITLE, title)
                     .putExtra(AlarmActivity.EXTRA_TEXT, text)
+                    .putExtra(AlarmActivity.EXTRA_SOUND, sound)
             )
         }
 

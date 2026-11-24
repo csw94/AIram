@@ -31,7 +31,7 @@ object AlarmScheduler {
             cancel(context, REQUEST_NEXT)
             return
         }
-        setAlarm(context, REQUEST_NEXT, alarm.time, alarm.title, alarm.text)
+        setAlarm(context, REQUEST_NEXT, alarm.time, alarm.title, alarm.text, alarm.sound)
     }
 
     // DB에서 최신 근무표를 읽어 다음 알람을 다시 예약 (울린 뒤, 재부팅 뒤, 시간 변경 뒤)
@@ -48,14 +48,14 @@ object AlarmScheduler {
     }
 
     // 다시 알림: 지금부터 minutes분 뒤 (글 앞에 "다시 알림 · "을 한 번만 붙임)
-    fun snooze(context: Context, minutes: Long, title: String, text: String) =
-        setAlarm(context, REQUEST_SNOOZE, snoozeTime(LocalDateTime.now(), minutes), title, snoozeText(text))
+    fun snooze(context: Context, minutes: Long, title: String, text: String, sound: String?) =
+        setAlarm(context, REQUEST_SNOOZE, snoozeTime(LocalDateTime.now(), minutes), title, snoozeText(text), sound)
 
     // 테스트용: seconds초 뒤에 울리기
-    fun scheduleTest(context: Context, seconds: Long) =
-        setAlarm(context, REQUEST_SNOOZE, LocalDateTime.now().plusSeconds(seconds), "테스트 알람", "알람이 잘 울리는지 확인해요")
+    fun scheduleTest(context: Context, seconds: Long, sound: String? = null) =
+        setAlarm(context, REQUEST_SNOOZE, LocalDateTime.now().plusSeconds(seconds), "테스트 알람", "알람이 잘 울리는지 확인해요", sound)
 
-    private fun setAlarm(context: Context, requestCode: Int, time: LocalDateTime, title: String, text: String) {
+    private fun setAlarm(context: Context, requestCode: Int, time: LocalDateTime, title: String, text: String, sound: String?) {
         if (!canScheduleExact(context)) return // 권한이 없으면 예약 불가 (홈 화면에서 안내)
 
         val fire = PendingIntent.getBroadcast(
@@ -63,7 +63,8 @@ object AlarmScheduler {
             Intent(context, AlarmReceiver::class.java)
                 .setAction(AlarmReceiver.ACTION_FIRE)
                 .putExtra(AlarmActivity.EXTRA_TITLE, title)
-                .putExtra(AlarmActivity.EXTRA_TEXT, text),
+                .putExtra(AlarmActivity.EXTRA_TEXT, text)
+                .putExtra(AlarmActivity.EXTRA_SOUND, sound),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         // 상단 바 알람 아이콘을 눌렀을 때 열 화면

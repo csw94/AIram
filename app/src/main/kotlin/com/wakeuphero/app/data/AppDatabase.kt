@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [ShiftTypeEntity::class, AlarmRuleEntity::class, WorkDayEntity::class, GeneralAlarmEntity::class],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -29,9 +29,16 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        // 2 → 3: 근무 유형에 알람음 열 추가 (기존 유형은 null = 기본 알람음)
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `shift_types` ADD COLUMN `soundUri` TEXT")
+            }
+        }
+
         fun create(context: Context): AppDatabase =
             Room.databaseBuilder(context, AppDatabase::class.java, "wakeuphero.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
     }
 }
