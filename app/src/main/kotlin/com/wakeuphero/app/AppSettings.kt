@@ -15,4 +15,12 @@ object AppSettings {
 
     fun setMathMission(context: Context, enabled: Boolean) =
         prefs(context).edit().putBoolean(KEY_MATH_MISSION, enabled).apply()
+
+    // 근무표 글자·사진 입력(S8)에서 찾을 내 이름 (한 번 쓰면 다음에도 채워 둠)
+    private const val KEY_ROSTER_NAME = "roster_name"
+
+    fun rosterName(context: Context): String = prefs(context).getString(KEY_ROSTER_NAME, "") ?: ""
+
+    fun setRosterName(context: Context, name: String) =
+        prefs(context).edit().putString(KEY_ROSTER_NAME, name.trim()).apply()
 }

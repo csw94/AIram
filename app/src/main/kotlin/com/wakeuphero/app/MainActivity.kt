@@ -20,9 +20,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.time.LocalDateTime
+import java.time.YearMonth
 
 // 앱에 있는 화면 목록
-enum class Screen { HOME, CALENDAR, SHIFT_LIST, SHIFT_EDIT, GENERAL_LIST, GENERAL_EDIT }
+enum class Screen { HOME, CALENDAR, ROSTER_IMPORT, SHIFT_LIST, SHIFT_EDIT, GENERAL_LIST, GENERAL_EDIT }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,6 +45,7 @@ fun App(vm: ScheduleViewModel = viewModel(factory = ScheduleViewModel.Factory)) 
     var screen by rememberSaveable { mutableStateOf(Screen.HOME) }
     var editingShiftId by rememberSaveable { mutableStateOf<Int?>(null) } // null = 새로 만들기
     var editingAlarmId by rememberSaveable { mutableStateOf<Int?>(null) }  // null = 새로 만들기
+    var calendarMonth by rememberSaveable { mutableStateOf(YearMonth.now()) } // 글자 입력 갔다 와도 보던 달 유지
     val schedule by vm.schedule.collectAsState()
     val shiftTypes by vm.shiftTypes.collectAsState()
     val alarmRules by vm.alarmRules.collectAsState()
@@ -74,7 +76,20 @@ fun App(vm: ScheduleViewModel = viewModel(factory = ScheduleViewModel.Factory)) 
                 onSetShift = vm::setShift,
                 onRemoveShift = vm::removeShift,
                 onToggleSkip = vm::toggleSkip,
-                onApplyPattern = vm::applyPatternToMonth
+                onApplyPattern = vm::applyPatternToMonth,
+                onOpenImport = { calendarMonth = it; screen = Screen.ROSTER_IMPORT },
+                initialMonth = calendarMonth
+            )
+        }
+
+        Screen.ROSTER_IMPORT -> {
+            BackHandler { screen = Screen.CALENDAR }
+            RosterImportScreen(
+                initialMonth = calendarMonth,
+                initialName = AppSettings.rosterName(context),
+                shiftTypes = shiftTypes,
+                onSave = { name, cells -> AppSettings.setRosterName(context, name); vm.applyRoster(cells) },
+                onClose = { screen = Screen.CALENDAR }
             )
         }
 

@@ -32,7 +32,8 @@
 | `dead32b` | **A2 다시 알림 5분/10분** — core `Snooze.kt`(선택지 5·10분, 울릴 시각, 잘못된 값은 5분, "다시 알림 · " 겹침 방지, 버튼 글, 테스트 5개), 알람 화면에 [5분 뒤][10분 뒤] 나란히, 알림 버튼도 [끄기][5분 뒤][10분 뒤] (분은 `EXTRA_MINUTES`) — core 테스트 120개, 에뮬레이터에서 알림 [10분 뒤] → 10분 뒤 예약 확인 |
 | `7fb5a76` | **A4 근무 유형별 알람음** — core `ShiftType.soundUri`·`withSound()`(휴무·빈 값은 null), `UpcomingAlarm.sound`(근무=유형 소리, 일반=기본, 테스트 6개), app DB **version 3**(`MIGRATION_2_3` = shift_types에 soundUri 열), 근무 유형 편집에 알람음 버튼(`AlarmSoundPicker.kt`, 휴대폰 기본 소리 선택 창), 예약→리시버→서비스→알림→알람 화면→다시 알림까지 `EXTRA_SOUND` 전달, 서비스는 고른 소리를 못 틀면 기본 알람음, 디버그 테스트 알람은 다음 근무 알람음 — core 테스트 126개, lint 오류 0, 에뮬레이터에서 마이그레이션(기존 유형 유지)·소리 선택·재시작 후 유지·실제 재생 확인 |
 | `7bc2231` | **A5·A2·A4 휴대폰 테스트 통과** (다크 모드 화면·번쩍임 없음 / 다시 알림 5·10분 버튼·글 겹침 없음 / 알람음 선택·유지·재생·기본음·DB v3 업데이트 후 근무표 유지) |
-| (이 커밋) | **회고 작성** — `RETROSPECTIVE.md` (기획 대비 완료 현황, 잘된 점, 어려웠던 점, 아쉬운 점, 다음 할 일) |
+| `30207c0` | **회고 작성** — `RETROSPECTIVE.md` (기획 대비 완료 현황, 잘된 점, 어려웠던 점, 아쉬운 점, 다음 할 일) |
+| (이 커밋) | **S8-1 근무표 글자로 입력** (사진 입력 1단계) — core `RosterImport.kt`(`parseRosterText`: 내 이름 줄 찾기·띄어쓰기 무시, 약어·근무 이름·휴무 다른 표기 O·0FF·휴·/ 알아보기, 모르는 칸 null, 말일 넘는 칸 버림 / `applyRoster`: 고른 칸만 반영, 테스트 11개), app `RosterImportScreen`(달 선택·이름·글자 붙여넣기 → [읽기] → 칸별 확인·고치기 → 저장), 달력에 [글자로 입력] 버튼, 이름은 `AppSettings`에 기억 — core 테스트 137개, lint 오류 0, 에뮬레이터에서 읽기·모르는 칸 고치기·저장·달력 반영·이름 유지 확인 |
 
 - 콘솔 입출력 설계: 파일 입력 + 달력형 출력
 - 기획서에 **S8 근무표 사진으로 입력** 추가 (Android 단계에서 설계안 비교 후 진행)
@@ -91,7 +92,7 @@ AIram/
 
 ## 3. 현재 진행 상태 및 남은 작업
 
-**현재 위치: 기획서 기능 중 S8만 남음. 회고 완료(`RETROSPECTIVE.md`) → 남은 것: (선택) S8 사진 입력·앱 아이콘, 미정 사항 결정**
+**현재 위치: S8 진행 중 — 1단계(글자 붙여넣기 → 확인 → 저장) 완료 → 다음: 2단계 ML Kit 한국어 OCR로 사진에서 글자 뽑기, 그다음 (선택) 앱 아이콘·미정 사항**
 
 ### 휴대폰 테스트 (A5·A2·A4) ✅ 통과 (2026-11-25)
 1. A5: 다크 모드 켜고 끄며 모든 화면 색·글자, 앱 열 때 흰 화면 번쩍임 없음
@@ -112,7 +113,9 @@ AIram/
   - [x] M6-1 core: GeneralAlarm 모델·울릴 시각·근무와 합친 다가오는 알람·검사 (테스트 13개)
   - [x] M6-2 app: Room에 general_alarms 표(DB version 2 + 마이그레이션), 알람 목록(F2·F3·F4)·편집 화면(F1·F6), 예약을 nextUpcomingAlarm으로 교체
   - [x] 추가 기능(A1·A2·A4·A5)·회고(`RETROSPECTIVE.md`)
-- [ ] (추가) S8 근무표 사진 입력 — 설계안 비교 후
+- [ ] **S8 근무표 사진 입력** (A안: 휴대폰 안 OCR, 두 단계)
+  - [x] S8-1 core 해석 함수 + 글자 붙여넣기·확인 화면
+  - [ ] S8-2 ML Kit 한국어 글자 인식(사진 고르기 → 글자·위치 → 표의 줄로 묶기 → S8-1 확인 화면)
 
 ### 미정 사항
 - 근무 유형/규칙 누락 시 처리 방식 (현재: 조용히 알람 없음)
@@ -131,8 +134,8 @@ AIram/
 | `build.gradle.kts` | 루트: 플러그인 버전만 (`apply false`) |
 | `core/build.gradle.kts` | core 빌드 (kotlin jvm + application, 실행 폴더 = 루트) |
 | `app/build.gradle.kts` | app 빌드 (AGP, Compose, `implementation(project(":core"))`) |
-| `core/src/main/kotlin/com/wakeuphero/core/` | `Models`(ShiftType.soundUri·withSound) `Snooze`(SNOOZE_OPTIONS·snoozeTime·snoozeMinutesOrDefault·snoozeText·snoozeLabel) `GeneralAlarm`(GeneralAlarm·generalAlarmTimes·UpcomingAlarm·upcomingAlarms·nextUpcomingAlarm·validateGeneralAlarm·defaultOneTimeDate·repeatDaysText) `AlarmInfo`(nextAlarmInfo·alarmTitle·alarmText, nextAlarm은 이걸 재사용) `ShiftTypeEdit`(validateShiftType·nextShiftTypeId·parseTimeText·alarmPreview) `ScheduleDiff` `ScheduleEdit`(setShift·removeShift·toggleSkip·applyPattern·parsePatternCodes·monthGrid) `Models` `AlarmCalculator` `DefaultShifts` `ScheduleParser` `PatternFill` `SkipAlarm` `DeleteShiftType` `ConsoleFormat` `Main`(콘솔) |
-| `core/src/test/kotlin/com/wakeuphero/core/` | 테스트 126개 (알람 계산 18, 파일 읽기 7, 출력 4, 환경 1, 패턴 9, 이번만 끄기 9, 유형 삭제 6, 근무표 편집 10, 저장 차이 5, 근무 유형 편집 12, 알람 정보 5, 일반 알람 13, 입력 형식 5, 미션 7, 다시 알림 5, 알람음 6 등) |
+| `core/src/main/kotlin/com/wakeuphero/core/` | `RosterImport`(RosterCell·parseRosterText·matchShiftCode·applyRoster) `Models`(ShiftType.soundUri·withSound) `Snooze`(SNOOZE_OPTIONS·snoozeTime·snoozeMinutesOrDefault·snoozeText·snoozeLabel) `GeneralAlarm`(GeneralAlarm·generalAlarmTimes·UpcomingAlarm·upcomingAlarms·nextUpcomingAlarm·validateGeneralAlarm·defaultOneTimeDate·repeatDaysText) `AlarmInfo`(nextAlarmInfo·alarmTitle·alarmText, nextAlarm은 이걸 재사용) `ShiftTypeEdit`(validateShiftType·nextShiftTypeId·parseTimeText·alarmPreview) `ScheduleDiff` `ScheduleEdit`(setShift·removeShift·toggleSkip·applyPattern·parsePatternCodes·monthGrid) `Models` `AlarmCalculator` `DefaultShifts` `ScheduleParser` `PatternFill` `SkipAlarm` `DeleteShiftType` `ConsoleFormat` `Main`(콘솔) |
+| `core/src/test/kotlin/com/wakeuphero/core/` | 테스트 137개 (근무표 글자 입력 11, 알람 계산 18, 파일 읽기 7, 출력 4, 환경 1, 패턴 9, 이번만 끄기 9, 유형 삭제 6, 근무표 편집 10, 저장 차이 5, 근무 유형 편집 12, 알람 정보 5, 일반 알람 13, 입력 형식 5, 미션 7, 다시 알림 5, 알람음 6 등) |
 | `app/src/main/kotlin/com/wakeuphero/app/MainActivity.kt` | `App()`: 화면 전환(enum Screen: HOME, CALENDAR, SHIFT_LIST, SHIFT_EDIT, GENERAL_LIST, GENERAL_EDIT), 뒤로가기 |
 | `app/.../ScheduleViewModel.kt` | 저장소의 Flow → StateFlow, 편집 = core 함수로 새 근무표 계산 → 저장소에 저장 → DB 갱신으로 화면 자동 반영. `Factory`로 저장소 주입 |
 | `app/.../HomeScreen.kt` | 오늘·내일 근무, 다음 알람(근무+일반), 오늘·내일 알람 목록(최대 8개), [근무표 달력][근무 유형 설정][일반 알람] |
@@ -149,6 +152,7 @@ AIram/
 | `app/.../AppSettings.kt` | SharedPreferences 설정 (math_mission) |
 | `app/.../Theme.kt` | `WakeUpHeroTheme`: 모든 화면을 감싸는 테마 (새 화면도 색은 MaterialTheme.colorScheme에서) |
 | `app/.../AlarmSoundPicker.kt` | `AlarmSoundRow`: 근무 유형 알람음 버튼 → 휴대폰 소리 선택 창(RingtoneManager), "기본값" 고르면 null 저장, 소리 이름 표시 |
+| `app/.../RosterImportScreen.kt` | S8 근무표 글자 입력: 달·이름·글자 → [읽기] → 칸별 확인(모르는 칸 빨강)·고치기 → [근무표에 저장]. 달력의 [글자로 입력]에서 열림 (Screen.ROSTER_IMPORT) |
 | `app/.../data/Entities.kt` | DB 표 4개(shift_types, alarm_rules, work_days, general_alarms — 요일은 "1,3,5" 글자) + core ↔ DB 변환 (날짜·시각은 글자로 저장) |
 | `app/.../data/AppDao.kt` | 조회는 Flow(자동 갱신), `applyScheduleChanges()`는 @Transaction으로 넣기·지우기 한 묶음 |
 | `app/.../data/AppDatabase.kt` | Room DB (파일명 wakeuphero.db, **version 3**, `MIGRATION_1_2` = general_alarms 표, `MIGRATION_2_3` = shift_types.soundUri 열) |
@@ -205,3 +209,5 @@ AIram/
 - 분기점 기록(A4): **휴대폰 소리 선택 창으로 고르고 소리 주소를 근무 유형에 저장(DB v3)**(vs 앱에 소리 파일 내장 / 목록·미리듣기 화면 직접 만들기) — 소리 파일 저작권 문제 없음, 미리듣기는 선택 창이 해 줌
 - 제가 정한 것(A4): 알람음은 근무 유형에만(일반 알람은 기본 알람음), 선택 창에서 "기본값"을 고르면 null 저장(휴대폰 기본 알람음이 바뀌면 따라감), 무음은 고를 수 없음, 휴무 유형은 소리 없음, 고른 소리를 못 틀면(지워짐 등) 기본 알람음으로 대신, 같은 시각 근무·일반 알람이 겹치면 근무 알람음, 디버그 테스트 알람은 다음 근무 알람의 소리
 - 알람음 메모: 에뮬레이터 선택 창이 준 주소는 `content://media/external_primary/audio/media/38?...` 형태(공용 저장소)였고 권한 없이 재생됨. 재생/실패는 logcat `AlarmService` 태그로 확인
+- 분기점 기록(S8): **A 휴대폰 안 OCR(ML Kit)**(vs B AI 이미지 분석 = 유료 API·외부 전송 / C 휴대폰 기본 기능으로 복사·붙여넣기 = 표 모양 깨짐) — 무료·오프라인·개인정보 보호, 인식 실수는 확인 화면에서 고침. 먼저 글자 붙여넣기로 전체 흐름을 완성하고(S8-1) 인식만 갈아 끼움(S8-2)
+- 제가 정한 것(S8-1): 이름은 띄어쓰기 무시하고 찾고 같은 이름 줄이 여럿이면 첫 줄, 이름을 비우면 붙여넣은 전체를 내 근무로 봄, 구분은 띄어쓰기·쉼표·`|`, 휴무 다른 표기는 O·0FF(숫자 0→O)·휴·휴무·/, 모르는 칸은 고르지 않으면 저장 안 함(기존 근무 유지), 저장한 날은 "이번만 끄기"가 풀림(setShift와 같음), 달은 달력에서 보던 달로 시작

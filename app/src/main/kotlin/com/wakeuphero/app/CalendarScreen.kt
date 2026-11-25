@@ -46,6 +46,7 @@ import java.util.Locale
 // - ◀ ▶ 로 달 이동
 // - 날짜를 누르면 근무 고르기 / 지우기 / 이번만 끄기
 // - [패턴으로 채우기] 로 그 달 전체 채우기
+// - [글자로 입력] 으로 근무표 글자 붙여넣기 화면(S8)
 @Composable
 fun CalendarScreen(
     schedule: List<WorkDay>,
@@ -55,6 +56,7 @@ fun CalendarScreen(
     onRemoveShift: (LocalDate) -> Unit,
     onToggleSkip: (LocalDate) -> Unit,
     onApplyPattern: (YearMonth, List<Int>) -> Unit,
+    onOpenImport: (YearMonth) -> Unit = {},
     initialMonth: YearMonth = YearMonth.now()
 ) {
     var month by remember { mutableStateOf(initialMonth) }
@@ -103,8 +105,13 @@ fun CalendarScreen(
             }
         }
 
-        Button(onClick = { showPatternDialog = true }, modifier = Modifier.fillMaxWidth()) {
-            Text("패턴으로 채우기")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { showPatternDialog = true }, modifier = Modifier.weight(1f)) {
+                Text("패턴으로 채우기")
+            }
+            Button(onClick = { onOpenImport(month) }, modifier = Modifier.weight(1f)) {
+                Text("글자로 입력")
+            }
         }
         Text("* = 이번만 끄기 (알람 안 울림)", style = MaterialTheme.typography.bodySmall)
     }

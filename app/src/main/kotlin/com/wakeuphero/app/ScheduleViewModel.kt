@@ -18,6 +18,8 @@ import com.wakeuphero.core.ShiftType
 import com.wakeuphero.core.WorkDay
 import com.wakeuphero.core.DeleteShiftResult
 import com.wakeuphero.core.applyPattern
+import com.wakeuphero.core.applyRoster
+import com.wakeuphero.core.RosterCell
 import com.wakeuphero.core.removeShift
 import com.wakeuphero.core.setShift
 import com.wakeuphero.core.toggleSkip
@@ -63,6 +65,9 @@ class ScheduleViewModel(
     // 그 달 전체(1일 ~ 말일)를 패턴으로 다시 채운다
     fun applyPatternToMonth(month: YearMonth, pattern: List<Int>) =
         edit { applyPattern(it, month.atDay(1), month.atEndOfMonth(), pattern) }
+
+    // 근무표 글자·사진 입력(S8): 확인이 끝난 칸들 중 근무를 고른 칸만 반영
+    fun applyRoster(cells: List<RosterCell>) = edit { applyRoster(it, cells) }
 
     // 근무 유형 저장 (검사는 화면에서 core의 validateShiftType으로 먼저 한다)
     fun saveShiftType(type: ShiftType, rule: AlarmRule?) =
