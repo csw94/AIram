@@ -36,7 +36,8 @@
 | `c1a54f9` | **S8-1 근무표 글자로 입력** (사진 입력 1단계) — core `RosterImport.kt`(`parseRosterText`: 내 이름 줄 찾기·띄어쓰기 무시, 약어·근무 이름·휴무 다른 표기 O·0FF·휴·/ 알아보기, 모르는 칸 null, 말일 넘는 칸 버림 / `applyRoster`: 고른 칸만 반영, 테스트 11개), app `RosterImportScreen`(달 선택·이름·글자 붙여넣기 → [읽기] → 칸별 확인·고치기 → 저장), 달력에 [글자로 입력] 버튼, 이름은 `AppSettings`에 기억 — core 테스트 137개, lint 오류 0, 에뮬레이터에서 읽기·모르는 칸 고치기·저장·달력 반영·이름 유지 확인 |
 | `2c05521` | **S8-2 근무표 사진에서 읽기** — app ML Kit 한국어 글자 인식(`text-recognition-korean:16.0.1`, 모델 내장·오프라인) `RosterPhotoReader`(사진 선택 창 → 작은 사진은 긴 변 2500px까지 최대 3배 키움 → 단어 상자), core `TextRows.kt`(`groupRows`·`rowsFromBoxes`: 상자를 높이로 줄 묶기, 테스트 5개) `RosterTable.kt`(`parseRosterBoxes`: 머리글 날짜 숫자 위치로 근무를 그 날짜 칸에 맞춤 → 빠진 칸은 그날만 "못 읽음", 머리글 숫자가 빠져도 간격으로 계산, `splitShiftCodes`: "OFFOFF" 나누기, 머리글 없으면 차례대로, 테스트 9개) — core 테스트 151개, lint 오류 0, 에뮬레이터에서 3명×14일 표 사진: 순서대로 맞추기 9칸(날짜 밀림) → 칸 위치 맞추기 10칸 정확 → 키우기 추가 13칸 정확·1칸 못 읽음 |
 | `2cd985d` | **알람 규칙 누락 시 기본 규칙으로 울림** — core `ruleOrDefault()`(규칙 없으면 90분 전·10분 간격·3번, 테스트 4개), `workAlarmInfos`가 사용, 설정 목록 표시 "기본 규칙(…)" — core 테스트 155개, APK 빌드 성공 |
-| (이 커밋) | **앱 아이콘** — 적응형 벡터 아이콘(`res/drawable/ic_launcher_background·foreground·monochrome.xml`, `mipmap-anydpi-v26/ic_launcher(_round).xml`): 남색 밤하늘 + 노란 자명종(7시), Android 13+ 테마 아이콘용 한 색 모양, 매니페스트 icon·roundIcon — APK 빌드 성공, 에뮬레이터 런처에서 확인 |
+| `3fbb63c` | **앱 아이콘** — 적응형 벡터 아이콘(`res/drawable/ic_launcher_background·foreground·monochrome.xml`, `mipmap-anydpi-v26/ic_launcher(_round).xml`): 남색 밤하늘 + 노란 자명종(7시), Android 13+ 테마 아이콘용 한 색 모양, 매니페스트 icon·roundIcon — APK 빌드 성공, 에뮬레이터 런처에서 확인 |
+| (이 커밋) | **APK 크기 줄이기** — `app/build.gradle.kts`에 `ndk.abiFilters = arm64-v8a, x86_64` (사용자 결정) — 디버그 APK 59.6MB → 40.1MB, 32비트 휴대폰 설치 불가 |
 
 - 콘솔 입출력 설계: 파일 입력 + 달력형 출력
 - 기획서에 **S8 근무표 사진으로 입력** 추가 (Android 단계에서 설계안 비교 후 진행)
@@ -95,7 +96,7 @@ AIram/
 
 ## 3. 현재 진행 상태 및 남은 작업
 
-**현재 위치: S8 완료 + 규칙 누락 처리·앱 아이콘 완료 → 휴대폰에서 실제 근무표 사진 테스트 대기. 남은 것: (선택) APK 크기(아래 S8 메모)**
+**현재 위치: S8 완료 + 규칙 누락 처리·앱 아이콘·APK 크기 완료 → 휴대폰에서 실제 근무표 사진 테스트 대기. 남은 것: 휴대폰 사진 테스트 결과 반영**
 
 ### 휴대폰 테스트 (A5·A2·A4) ✅ 통과 (2026-11-25)
 1. A5: 다크 모드 켜고 끄며 모든 화면 색·글자, 앱 열 때 흰 화면 번쩍임 없음
@@ -223,3 +224,4 @@ AIram/
 - 제가 정한 것(규칙 누락): 기본값은 새 근무 유형 편집 화면 기본값과 같은 90/10/3, 휴무는 그대로 알람 없음, 근무 유형 자체를 못 찾으면 알람 없음(출근 시간을 모름), 설정 목록에 "기본 규칙(…)"으로 표시
 - 분기점 기록(앱 아이콘): **벡터 XML 적응형 아이콘 직접 작성**(vs Android Studio Image Asset 마법사 = 사람 손 필요 / 해상도별 PNG 5장) — minSdk 26이라 PNG 없이 충분, 글자 파일이라 고치기 쉬움
 - 제가 정한 것(앱 아이콘): 배경 남색 #283593(밤) + 별 2개, 앞면 노란 자명종 #FFD54F(주간 근무 색), 바늘 7시(출근 알람), 그림은 가운데 66dp 안전 영역 안. 알림 작은 아이콘은 그대로 둠
+- APK 크기(사용자 결정): `abiFilters`로 arm64-v8a(실기기)·x86_64(에뮬레이터)만 → 디버그 APK 약 40MB. 32비트(armeabi-v7a·x86) 휴대폰은 설치 불가. 되돌리려면 `app/build.gradle.kts`의 `ndk { abiFilters … }` 줄 삭제

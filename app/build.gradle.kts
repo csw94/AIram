@@ -16,6 +16,9 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"
+
+        // 인식 엔진(ML Kit) 크기 줄이기: 64비트 실기기(arm64-v8a)·에뮬레이터(x86_64)만 넣음 → 32비트 옛 휴대폰은 설치 불가
+        ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
     }
 
     compileOptions {
