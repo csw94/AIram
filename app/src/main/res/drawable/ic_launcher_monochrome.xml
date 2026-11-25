@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 테마 아이콘(Android 13+)용 한 가지 색 모양 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FFFFFF" android:pathData="M35,40a9,9 0,0 1,13 -12z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M73,40a9,9 0,0 0,-13 -12z" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="4" android:strokeLineCap="round"
+        android:pathData="M40,74L36,80M68,74L72,80" />
+    <!-- 고리 모양 시계 + 바늘 -->
+    <path android:fillColor="#FFFFFF" android:fillType="evenOdd"
+        android:pathData="M54,56m-21,0a21,21 0,1 1,42 0a21,21 0,1 1,-42 0zM54,56m-16,0a16,16 0,1 0,32 0a16,16 0,1 0,-32 0z" />
+    <path android:strokeColor="#FFFFFF" android:strokeWidth="3" android:strokeLineCap="round"
+        android:pathData="M54,56L54,44M54,56L47,63" />
+</vector>
