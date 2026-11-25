@@ -14,7 +14,7 @@ data class AlarmInfo(
 )
 
 // 현재 시각(now) "이후" ~ 한 달 뒤까지 중 가장 빠른 알람의 자세한 정보 (없으면 null)
-// 근무 유형이나 알람 규칙을 못 찾으면 그날은 알람 없음
+// 근무 유형을 못 찾으면 그날은 알람 없음, 알람 규칙이 없으면 기본 규칙으로 계산
 fun nextAlarmInfo(
     now: LocalDateTime,
     schedule: List<WorkDay>,
@@ -27,7 +27,7 @@ fun nextAlarmInfo(
         .minByOrNull { it.time }
 }
 
-// 근무표 전체의 근무 알람 (기간 제한 없음) — 근무 유형이나 알람 규칙을 못 찾으면 그날은 알람 없음
+// 근무표 전체의 근무 알람 (기간 제한 없음) — 근무 유형을 못 찾으면 그날은 알람 없음, 규칙이 없으면 기본 규칙
 internal fun workAlarmInfos(
     schedule: List<WorkDay>,
     shiftTypes: List<ShiftType>,
@@ -36,7 +36,7 @@ internal fun workAlarmInfos(
     schedule
         .flatMap { workDay ->
             val shiftType = shiftTypes.find { it.id == workDay.shiftTypeId } ?: return@flatMap emptyList()
-            val rule = rules.find { it.shiftTypeId == workDay.shiftTypeId } ?: return@flatMap emptyList()
+            val rule = ruleOrDefault(workDay.shiftTypeId, rules) // 규칙이 없으면 기본 규칙
             val times = alarmTimesFor(workDay, shiftType, rule)
             // 시각마다 "몇 번째인지"를 함께 묶어 둔다
             times.mapIndexed { index, time -> AlarmInfo(time, workDay, shiftType, index + 1, times.size) }

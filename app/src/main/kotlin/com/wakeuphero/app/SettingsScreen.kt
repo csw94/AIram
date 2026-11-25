@@ -70,7 +70,7 @@ fun ShiftTypeListScreen(
                         Text(
                             when {
                                 shift.startTime == null -> "휴무 · 알람 없음"
-                                rule == null -> "출근 ${shift.startTime} · 알람 규칙 없음"
+                                rule == null -> "출근 ${shift.startTime} · 기본 규칙(90분 전부터 10분 간격 3번)"
                                 else -> "출근 ${shift.startTime} · ${rule.minutesBefore}분 전부터 ${rule.intervalMinutes}분 간격 ${rule.repeatCount}번"
                             },
                             style = MaterialTheme.typography.bodyMedium

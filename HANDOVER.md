@@ -34,7 +34,8 @@
 | `7bc2231` | **A5·A2·A4 휴대폰 테스트 통과** (다크 모드 화면·번쩍임 없음 / 다시 알림 5·10분 버튼·글 겹침 없음 / 알람음 선택·유지·재생·기본음·DB v3 업데이트 후 근무표 유지) |
 | `30207c0` | **회고 작성** — `RETROSPECTIVE.md` (기획 대비 완료 현황, 잘된 점, 어려웠던 점, 아쉬운 점, 다음 할 일) |
 | `c1a54f9` | **S8-1 근무표 글자로 입력** (사진 입력 1단계) — core `RosterImport.kt`(`parseRosterText`: 내 이름 줄 찾기·띄어쓰기 무시, 약어·근무 이름·휴무 다른 표기 O·0FF·휴·/ 알아보기, 모르는 칸 null, 말일 넘는 칸 버림 / `applyRoster`: 고른 칸만 반영, 테스트 11개), app `RosterImportScreen`(달 선택·이름·글자 붙여넣기 → [읽기] → 칸별 확인·고치기 → 저장), 달력에 [글자로 입력] 버튼, 이름은 `AppSettings`에 기억 — core 테스트 137개, lint 오류 0, 에뮬레이터에서 읽기·모르는 칸 고치기·저장·달력 반영·이름 유지 확인 |
-| (이 커밋) | **S8-2 근무표 사진에서 읽기** — app ML Kit 한국어 글자 인식(`text-recognition-korean:16.0.1`, 모델 내장·오프라인) `RosterPhotoReader`(사진 선택 창 → 작은 사진은 긴 변 2500px까지 최대 3배 키움 → 단어 상자), core `TextRows.kt`(`groupRows`·`rowsFromBoxes`: 상자를 높이로 줄 묶기, 테스트 5개) `RosterTable.kt`(`parseRosterBoxes`: 머리글 날짜 숫자 위치로 근무를 그 날짜 칸에 맞춤 → 빠진 칸은 그날만 "못 읽음", 머리글 숫자가 빠져도 간격으로 계산, `splitShiftCodes`: "OFFOFF" 나누기, 머리글 없으면 차례대로, 테스트 9개) — core 테스트 151개, lint 오류 0, 에뮬레이터에서 3명×14일 표 사진: 순서대로 맞추기 9칸(날짜 밀림) → 칸 위치 맞추기 10칸 정확 → 키우기 추가 13칸 정확·1칸 못 읽음 |
+| `2c05521` | **S8-2 근무표 사진에서 읽기** — app ML Kit 한국어 글자 인식(`text-recognition-korean:16.0.1`, 모델 내장·오프라인) `RosterPhotoReader`(사진 선택 창 → 작은 사진은 긴 변 2500px까지 최대 3배 키움 → 단어 상자), core `TextRows.kt`(`groupRows`·`rowsFromBoxes`: 상자를 높이로 줄 묶기, 테스트 5개) `RosterTable.kt`(`parseRosterBoxes`: 머리글 날짜 숫자 위치로 근무를 그 날짜 칸에 맞춤 → 빠진 칸은 그날만 "못 읽음", 머리글 숫자가 빠져도 간격으로 계산, `splitShiftCodes`: "OFFOFF" 나누기, 머리글 없으면 차례대로, 테스트 9개) — core 테스트 151개, lint 오류 0, 에뮬레이터에서 3명×14일 표 사진: 순서대로 맞추기 9칸(날짜 밀림) → 칸 위치 맞추기 10칸 정확 → 키우기 추가 13칸 정확·1칸 못 읽음 |
+| (이 커밋) | **알람 규칙 누락 시 기본 규칙으로 울림** — core `ruleOrDefault()`(규칙 없으면 90분 전·10분 간격·3번, 테스트 4개), `workAlarmInfos`가 사용, 설정 목록 표시 "기본 규칙(…)" — core 테스트 155개, APK 빌드 성공 |
 
 - 콘솔 입출력 설계: 파일 입력 + 달력형 출력
 - 기획서에 **S8 근무표 사진으로 입력** 추가 (Android 단계에서 설계안 비교 후 진행)
@@ -93,7 +94,7 @@ AIram/
 
 ## 3. 현재 진행 상태 및 남은 작업
 
-**현재 위치: S8 완료(글자·사진 입력) → 휴대폰에서 실제 근무표 사진 테스트 대기. 남은 것: (선택) 앱 아이콘, 미정 사항, APK 크기(아래 S8 메모)**
+**현재 위치: S8 완료 + 규칙 누락 처리 완료 → 휴대폰에서 실제 근무표 사진 테스트 대기. 남은 것: (선택) 앱 아이콘, APK 크기(아래 S8 메모)**
 
 ### 휴대폰 테스트 (A5·A2·A4) ✅ 통과 (2026-11-25)
 1. A5: 다크 모드 켜고 끄며 모든 화면 색·글자, 앱 열 때 흰 화면 번쩍임 없음
@@ -119,7 +120,7 @@ AIram/
   - [x] S8-2 ML Kit 한국어 글자 인식(사진 고르기 → 글자 상자 → 날짜 칸 위치로 맞추기 → S8-1 확인 화면)
 
 ### 미정 사항
-- 근무 유형/규칙 누락 시 처리 방식 (현재: 조용히 알람 없음)
+- ~~근무 유형/규칙 누락 시 처리~~ → 규칙 누락은 기본 규칙으로 울림(완료), 근무 유형 누락은 출근 시간을 몰라 알람 없음(삭제 막기로 사실상 안 생김)
 - 앱 아이콘 (현재 기본값)
 
 ---
@@ -135,8 +136,8 @@ AIram/
 | `build.gradle.kts` | 루트: 플러그인 버전만 (`apply false`) |
 | `core/build.gradle.kts` | core 빌드 (kotlin jvm + application, 실행 폴더 = 루트) |
 | `app/build.gradle.kts` | app 빌드 (AGP, Compose, `implementation(project(":core"))`) |
-| `core/src/main/kotlin/com/wakeuphero/core/` | `RosterTable`(parseRosterBoxes·splitShiftCodes) `TextRows`(TextBox·groupRows·rowsFromBoxes) `RosterImport`(RosterCell·parseRosterText·matchShiftCode·applyRoster) `Models`(ShiftType.soundUri·withSound) `Snooze`(SNOOZE_OPTIONS·snoozeTime·snoozeMinutesOrDefault·snoozeText·snoozeLabel) `GeneralAlarm`(GeneralAlarm·generalAlarmTimes·UpcomingAlarm·upcomingAlarms·nextUpcomingAlarm·validateGeneralAlarm·defaultOneTimeDate·repeatDaysText) `AlarmInfo`(nextAlarmInfo·alarmTitle·alarmText, nextAlarm은 이걸 재사용) `ShiftTypeEdit`(validateShiftType·nextShiftTypeId·parseTimeText·alarmPreview) `ScheduleDiff` `ScheduleEdit`(setShift·removeShift·toggleSkip·applyPattern·parsePatternCodes·monthGrid) `Models` `AlarmCalculator` `DefaultShifts` `ScheduleParser` `PatternFill` `SkipAlarm` `DeleteShiftType` `ConsoleFormat` `Main`(콘솔) |
-| `core/src/test/kotlin/com/wakeuphero/core/` | 테스트 151개 (근무표 글자 입력 11, 줄 묶기 5, 칸 맞추기 9, 알람 계산 18, 파일 읽기 7, 출력 4, 환경 1, 패턴 9, 이번만 끄기 9, 유형 삭제 6, 근무표 편집 10, 저장 차이 5, 근무 유형 편집 12, 알람 정보 5, 일반 알람 13, 입력 형식 5, 미션 7, 다시 알림 5, 알람음 6 등) |
+| `core/src/main/kotlin/com/wakeuphero/core/` | `RosterTable`(parseRosterBoxes·splitShiftCodes) `TextRows`(TextBox·groupRows·rowsFromBoxes) `RosterImport`(RosterCell·parseRosterText·matchShiftCode·applyRoster) `Models`(ShiftType.soundUri·withSound) `Snooze`(SNOOZE_OPTIONS·snoozeTime·snoozeMinutesOrDefault·snoozeText·snoozeLabel) `GeneralAlarm`(GeneralAlarm·generalAlarmTimes·UpcomingAlarm·upcomingAlarms·nextUpcomingAlarm·validateGeneralAlarm·defaultOneTimeDate·repeatDaysText) `AlarmInfo`(nextAlarmInfo·alarmTitle·alarmText, nextAlarm은 이걸 재사용) `ShiftTypeEdit`(validateShiftType·nextShiftTypeId·parseTimeText·alarmPreview) `ScheduleDiff` `ScheduleEdit`(setShift·removeShift·toggleSkip·applyPattern·parsePatternCodes·monthGrid) `Models` `AlarmCalculator` `DefaultShifts`(ruleOrDefault) `ScheduleParser` `PatternFill` `SkipAlarm` `DeleteShiftType` `ConsoleFormat` `Main`(콘솔) |
+| `core/src/test/kotlin/com/wakeuphero/core/` | 테스트 155개 (규칙 누락 4, 근무표 글자 입력 11, 줄 묶기 5, 칸 맞추기 9, 알람 계산 18, 파일 읽기 7, 출력 4, 환경 1, 패턴 9, 이번만 끄기 9, 유형 삭제 6, 근무표 편집 10, 저장 차이 5, 근무 유형 편집 12, 알람 정보 5, 일반 알람 13, 입력 형식 5, 미션 7, 다시 알림 5, 알람음 6 등) |
 | `app/src/main/kotlin/com/wakeuphero/app/MainActivity.kt` | `App()`: 화면 전환(enum Screen: HOME, CALENDAR, SHIFT_LIST, SHIFT_EDIT, GENERAL_LIST, GENERAL_EDIT), 뒤로가기 |
 | `app/.../ScheduleViewModel.kt` | 저장소의 Flow → StateFlow, 편집 = core 함수로 새 근무표 계산 → 저장소에 저장 → DB 갱신으로 화면 자동 반영. `Factory`로 저장소 주입 |
 | `app/.../HomeScreen.kt` | 오늘·내일 근무, 다음 알람(근무+일반), 오늘·내일 알람 목록(최대 8개), [근무표 달력][근무 유형 설정][일반 알람] |
@@ -217,3 +218,5 @@ AIram/
 - 제가 정한 것(S8-2): 모델 **앱 내장형**(vs Play 서비스가 받아 오는 형 = 앱은 작지만 처음에 인터넷·다운로드 필요), 사진은 Android 사진 선택 창(권한 필요 없음, 카메라 직접 찍기는 없음 → 카메라 앱으로 찍고 고르기), 작은 사진은 긴 변 2500px까지 최대 3배 키움(Android 8은 키우지 않음), 머리글은 1~말일 숫자가 가장 많은 줄(2개 이상), 한 날짜에 글자가 둘이면 칸 가운데에 가까운 것, 사진으로 읽은 뒤 글자 칸을 직접 고치면 위치 정보 없이 차례대로 읽음
 - S8 메모: ML Kit 한국어 모델 때문에 **디버그 APK 약 58MB**(인식 엔진이 CPU 4종 × 약 11MB). Play 스토어용 AAB로 올리면 휴대폰에 맞는 것만 설치되어 작아짐. 직접 APK 설치로 줄이려면 `abiFilters`로 arm64-v8a(실기기)·x86_64(에뮬레이터)만 남기는 방법이 있음(32비트 옛 휴대폰 미지원이 됨)
 - S8 알려진 한계: ML Kit이 혼자 있는 한 글자 칸(E, N)을 가끔 놓침(→ 확인 화면에서 "못 읽음"으로 표시), 손글씨는 약함, 칸 위치는 머리글 숫자 기준이라 머리글이 사진에 함께 찍혀야 정확함
+- 분기점 기록(규칙 누락): **규칙이 없으면 기본 규칙(90분 전·10분 간격·3번)으로 울림**(vs 조용히 알람 없음 / 홈에 경고만) — 알람 앱에서 출근날 알람이 빠지는 게 가장 위험. core `ruleOrDefault()` 하나로 처리
+- 제가 정한 것(규칙 누락): 기본값은 새 근무 유형 편집 화면 기본값과 같은 90/10/3, 휴무는 그대로 알람 없음, 근무 유형 자체를 못 찾으면 알람 없음(출근 시간을 모름), 설정 목록에 "기본 규칙(…)"으로 표시

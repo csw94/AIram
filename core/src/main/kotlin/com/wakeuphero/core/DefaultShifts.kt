@@ -13,4 +13,10 @@ val defaultShiftTypes = listOf(
 // 기본 알람 규칙: 모든 근무 출근 90분 전부터, 10분 간격, 3번
 val defaultAlarmRules = defaultShiftTypes
     .filter { !it.isOff }
-    .map { AlarmRule(shiftTypeId = it.id, minutesBefore = 90, intervalMinutes = 10, repeatCount = 3) }
+    .map { ruleOrDefault(it.id, emptyList()) }
+
+// 근무 유형의 알람 규칙 찾기 — 없으면 기본 규칙(90분 전·10분 간격·3번)으로 대신한다
+// (알람 앱에서 출근날 알람이 조용히 빠지는 게 가장 위험하므로)
+fun ruleOrDefault(shiftTypeId: Int, rules: List<AlarmRule>): AlarmRule =
+    rules.find { it.shiftTypeId == shiftTypeId }
+        ?: AlarmRule(shiftTypeId = shiftTypeId, minutesBefore = 90, intervalMinutes = 10, repeatCount = 3)
