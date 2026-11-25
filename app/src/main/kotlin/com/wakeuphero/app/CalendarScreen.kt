@@ -110,7 +110,7 @@ fun CalendarScreen(
                 Text("패턴으로 채우기")
             }
             Button(onClick = { onOpenImport(month) }, modifier = Modifier.weight(1f)) {
-                Text("글자로 입력")
+                Text("사진·글자로 입력")
             }
         }
         Text("* = 이번만 끄기 (알람 안 울림)", style = MaterialTheme.typography.bodySmall)

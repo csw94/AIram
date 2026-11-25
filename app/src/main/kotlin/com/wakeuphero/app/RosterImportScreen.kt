@@ -1,6 +1,10 @@
 package com.wakeuphero.app
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -35,12 +39,15 @@ import com.wakeuphero.core.RosterParseResult
 import com.wakeuphero.core.ShiftType
 import com.wakeuphero.core.defaultShiftTypes
 import com.wakeuphero.core.parseRosterText
+import com.wakeuphero.core.TextBox
+import com.wakeuphero.core.parseRosterBoxes
+import com.wakeuphero.core.rowsFromBoxes
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-// S8 근무표 입력 (1단계: 글자 붙여넣기 → 확인·수정 → 저장)
-// 다음 단계에서 [사진에서 읽기]가 붙으면, 사진에서 뽑은 글자가 같은 칸에 들어간다
+// S8 근무표 사진·글자 입력: (사진 → 글자 인식 또는 글자 붙여넣기) → 확인·수정 → 저장
+// 사진에서 뽑은 글자도 붙여넣기와 같은 글자 칸에 들어가서 같은 방식으로 해석된다
 @Composable
 fun RosterImportScreen(
     initialMonth: YearMonth,
@@ -55,11 +62,33 @@ fun RosterImportScreen(
     var result by remember { mutableStateOf<RosterParseResult?>(null) } // 해석 결과 (확인 화면)
     var cells by remember { mutableStateOf<List<RosterCell>>(emptyList()) } // 사용자가 고친 칸들
     var editingIndex by remember { mutableStateOf<Int?>(null) }
+    var reading by remember { mutableStateOf(false) }          // 사진 읽는 중
+    var photoError by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
+    // 사진에서 읽은 글자 상자 (위치 정보가 있어 날짜 칸에 맞출 수 있음). 글자를 직접 고치면 버리고 글자로 읽음
+    var photoBoxes by remember { mutableStateOf<List<TextBox>?>(null) }
 
     fun parse() {
-        val r = parseRosterText(text, name, month, shiftTypes)
+        val boxes = photoBoxes
+        val r = if (boxes != null) parseRosterBoxes(boxes, name, month, shiftTypes)
+                else parseRosterText(text, name, month, shiftTypes)
         result = r
         cells = (r as? RosterParseResult.Found)?.cells ?: emptyList()
+    }
+
+    // 사진 고르기 (Android 사진 선택 창: 저장소 권한 필요 없음) → 글자 인식 → 글자 칸에 넣고 바로 읽기
+    val pickPhoto = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        reading = true
+        photoError = null
+        result = null
+        RosterPhotoReader.read(context, uri) { r ->
+            reading = false
+            r.onSuccess { boxes ->
+                if (boxes.isEmpty()) photoError = "사진에서 글자를 찾지 못했어요. 더 밝고 반듯하게 찍어 보세요."
+                else { text = rowsFromBoxes(boxes); photoBoxes = boxes; parse() }
+            }.onFailure { photoError = "사진을 읽지 못했어요. 다른 사진으로 해 보세요." }
+        }
     }
 
     Column(
@@ -67,9 +96,9 @@ fun RosterImportScreen(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         TextButton(onClick = onClose) { Text("← 달력") }
-        Text("근무표 글자로 입력", style = MaterialTheme.typography.titleLarge)
+        Text("근무표 사진·글자로 입력", style = MaterialTheme.typography.titleLarge)
         Text(
-            "근무표 글자를 붙여넣으면 내 이름 줄의 근무를 1일부터 차례로 읽어요. 저장 전에 한 칸씩 확인할 수 있어요.",
+            "근무표 사진을 고르거나 글자를 붙여넣으면 내 이름 줄의 근무를 1일부터 차례로 읽어요. 저장 전에 한 칸씩 확인할 수 있어요.",
             style = MaterialTheme.typography.bodySmall
         )
 
@@ -93,9 +122,20 @@ fun RosterImportScreen(
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
+        Button(
+            onClick = { pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+            enabled = !reading,
+            modifier = Modifier.fillMaxWidth()
+        ) { Text(if (reading) "사진 읽는 중..." else "📷 사진에서 읽기") }
+        photoError?.let { ErrorText(it) }
+        Text(
+            "사진 팁: 표가 화면에 꽉 차게, 반듯하고 밝게. 읽은 글자는 아래 칸에 들어가서 고칠 수 있어요.",
+            style = MaterialTheme.typography.bodySmall
+        )
+
         OutlinedTextField(
             value = text,
-            onValueChange = { text = it; result = null },
+            onValueChange = { text = it; result = null; photoBoxes = null },
             label = { Text("근무표 글자") },
             placeholder = { Text("예) 홍길동 D D E E N N OFF OFF ...") },
             minLines = 4,
@@ -139,7 +179,7 @@ fun RosterImportScreen(
         val cell = cells[i]
         AlertDialog(
             onDismissRequest = { editingIndex = null },
-            title = { Text("${cell.date.format(cellDateFormat)} · 읽은 글자 '${cell.code}'") },
+            title = { Text("${cell.date.format(cellDateFormat)} · ${codeLabel(cell.code)}") },
             text = {
                 Column {
                     shiftTypes.forEach { shift ->
@@ -180,7 +220,7 @@ private fun RosterCellRow(cell: RosterCell, shift: ShiftType?, onClick: () -> Un
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(cell.date.format(cellDateFormat), modifier = Modifier.weight(1f).padding(start = 12.dp))
-        Text("'${cell.code}' →", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+        Text("${codeLabel(cell.code)} →", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
         OutlinedButton(onClick = onClick, modifier = Modifier.weight(1.2f).padding(4.dp)) {
             Text(
                 shift?.let { "${it.name} (${it.shortName})" } ?: "고르기",
@@ -203,3 +243,6 @@ private fun RosterImportScreenPreview() {
         )
     }
 }
+
+// 읽은 글자 표시: 사진에서 그 칸을 못 읽었으면 빈 글자
+private fun codeLabel(code: String) = if (code.isEmpty()) "못 읽음" else "'$code'"

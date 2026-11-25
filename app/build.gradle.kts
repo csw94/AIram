@@ -46,4 +46,7 @@ dependencies {
     implementation("androidx.room:room-runtime:2.8.5")
     implementation("androidx.room:room-ktx:2.8.5")
     ksp("androidx.room:room-compiler:2.8.5")
+
+    // ML Kit 한국어 글자 인식(S8 근무표 사진 입력): 모델을 앱에 넣어 인터넷 없이 휴대폰 안에서 인식
+    implementation("com.google.mlkit:text-recognition-korean:16.0.1")
 }
