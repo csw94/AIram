@@ -225,3 +225,4 @@ AIram/
 - 분기점 기록(앱 아이콘): **벡터 XML 적응형 아이콘 직접 작성**(vs Android Studio Image Asset 마법사 = 사람 손 필요 / 해상도별 PNG 5장) — minSdk 26이라 PNG 없이 충분, 글자 파일이라 고치기 쉬움
 - 제가 정한 것(앱 아이콘): 배경 남색 #283593(밤) + 별 2개, 앞면 노란 자명종 #FFD54F(주간 근무 색), 바늘 7시(출근 알람), 그림은 가운데 66dp 안전 영역 안. 알림 작은 아이콘은 그대로 둠
 - APK 크기(사용자 결정): `abiFilters`로 arm64-v8a(실기기)·x86_64(에뮬레이터)만 → 디버그 APK 약 40MB. 32비트(armeabi-v7a·x86) 휴대폰은 설치 불가. 되돌리려면 `app/build.gradle.kts`의 `ndk { abiFilters … }` 줄 삭제
+- 에뮬레이터 사진 읽기 확인(APK 크기 줄인 뒤, 2026-11-25): PowerShell(System.Drawing)로 만든 3명×14일 표 PNG → x86_64 엔진 정상 동작. Kim 줄 14칸 모두 정확, Hong 줄은 인식이 2칸(11·14일) 빠졌지만 "못 읽음"으로만 표시되고 나머지 날짜는 밀리지 않음. 사진 넣기: `adb push 파일 /sdcard/Pictures/` 후 MEDIA_SCANNER_SCAN_FILE 방송, 사진 선택 창은 사진 누른 뒤 [Done]
